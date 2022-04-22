@@ -94,6 +94,12 @@ python SteamGamesScraper.py -r 10
 > **Although it is not recommended, you can always retry by changing the value to 0.**
 
 
+At the end of the scan, or by pressing _Ctrl + C_, all data are recorded. You can activate the _auto-save_ to activate each X new entries:
+
+```
+python SteamGamesScraper.py -a 100
+```
+
 ## 📜 License
 
 Code released under [MIT License](https://github.com/FronkonGames/Machine-Learning-Game-Ideas/blob/main/LICENSE.md).
