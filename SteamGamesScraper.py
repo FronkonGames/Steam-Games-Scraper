@@ -39,7 +39,7 @@ def DoRequest(url, parameters=None, retryTime=4, successCount=0, errorCount=0, r
     response = requests.get(url=url, params=parameters)
   except SSLError as e:
     print(f'[!!] {e}.')
-    response = None
+    sys.exit()
 
   if response and response.status_code == 200:
     errorCount = 0
@@ -255,6 +255,11 @@ def Scraper(dataset, discarted, args):
           print(f'[i] Game \'{name}\' added ({len(dataset)}).')
 
           gamesAdded += 1
+
+          if args.autosave > 0 and (gamesAdded + gamesDiscarted) % args.autosave == 0:
+            print('[i] Autosaving.')
+            SaveDataset(dataset, args)
+            SaveDiscarted(discarted)
         else:
           discarted.append(appID)
           gamesDiscarted += 1
@@ -273,6 +278,7 @@ if __name__ == "__main__":
   parser.add_argument('-o', '--outfile', type=str, default=OUT_FILE, help='Output file name')
   parser.add_argument('-s', '--sleep', type=float, default=1.5, help='Waiting time between requests')
   parser.add_argument('-r', '--retries', type=int, default=4, help='Number of retries (0 to always retry)')
+  parser.add_argument('-a', '--autosave', type=int, default=100, help='Record the data every number of new entries (0 to deactivate)')
   args = parser.parse_args()
 
   if 'h' in args or 'help' in args:
