@@ -29,9 +29,14 @@ import time
 from os.path import exists
 import traceback
 
-APPLIST_FILE    = 'applist.json'
-OUT_FILE        = 'games.json'
-DISCARTED_FILE  = 'discarted.json'
+DEFAULT_OUTFILE  = 'games.json'
+DEFAULT_SLEEP    = 1.5
+DEFAULT_RETRIES  = 4
+DEFAULT_AUTOSAVE = 100
+DEFAULT_TIMEOUT  = 5
+
+APPLIST_FILE   = 'applist.json'
+DISCARTED_FILE = 'discarted.json'
 
 def DoRequest(url, parameters=None, retryTime=4, successCount=0, errorCount=0, retries=0):
   '''
@@ -39,20 +44,10 @@ def DoRequest(url, parameters=None, retryTime=4, successCount=0, errorCount=0, r
   '''
   response = None
   try:
-    response = requests.get(url=url, params=parameters, timeout=5)
-  except requests.exceptions.HTTPError as ex:
-    print(f'[!!] An exception of type {type(ex).__name__} ocurred. Traceback: {traceback.format_exc()}')
-    response = None
-  except requests.exceptions.ConnectionError as ex:
-    print(f'[!!] An exception of type {type(ex).__name__} ocurred. Traceback: {traceback.format_exc()}')
-    response = None
-  except requests.exceptions.Timeout as ex:
-    print(f'[!!] An exception of type {type(ex).__name__} ocurred. Traceback: {traceback.format_exc()}')
-    response = None
-  except requests.exceptions.RequestException as ex:
-    print(f'[!!] An exception of type {type(ex).__name__} ocurred. Traceback: {traceback.format_exc()}')
-    response = None
-  except SSLError as ex:
+    response = requests.get(url=url, params=parameters, timeout=DEFAULT_TIMEOUT)
+  except (requests.exceptions.HTTPError, requests.exceptions.ConnectionError,
+          requests.exceptions.Timeout, requests.exceptions.RequestException,
+          SSLError) as ex:
     print(f'[!!] An exception of type {type(ex).__name__} ocurred. Traceback: {traceback.format_exc()}')
     response = None
 
@@ -71,14 +66,14 @@ def DoRequest(url, parameters=None, retryTime=4, successCount=0, errorCount=0, r
       retryTime = min(retryTime * 2, 256)
       return DoRequest(url, parameters, retryTime, successCount, errorCount, retries)
     else:
-      print('[!!] Number of retries expired.')
+      print('[!] No more retries.')
       sys.exit()
 
   return response
 
-def ParseSteamRequest(appID, retryTime, successRequestCount, errorRequestCount, retries):
+def SteamRequest(appID, retryTime, successRequestCount, errorRequestCount, retries):
   '''
-  Request information about a Steam app.
+  Request and parse information about a Steam app.
   '''
   url = "http://store.steampowered.com/api/appdetails/"
   response = DoRequest(url, {"appids": appID}, retryTime, successRequestCount, errorRequestCount, retries)
@@ -87,11 +82,11 @@ def ParseSteamRequest(appID, retryTime, successRequestCount, errorRequestCount, 
       data = response.json()
       app = data[appID]
       if app['success'] == False:
-        print(f'[w] \'{appID}\' info not available.')
+        print(f'[w] \'{appID}\' detail not available.')
         return None
       elif app['data']['type'] != 'game':
         type = app['data']['type']
-        print(f'[w] \'{appID}\' is not a game ({type}).')
+        print(f'[i] \'{appID}\' is not a game ({type}).')
         return None
       elif app['data']['is_free'] == False and 'price_overview' in app['data'] and app['data']['price_overview']['final_formatted'] == '':
         print(f'[w] \'{appID}\' is not free but has no price.')
@@ -100,7 +95,7 @@ def ParseSteamRequest(appID, retryTime, successRequestCount, errorRequestCount, 
         print(f'[w] \'{appID}\' has no developers.')
         return None
       elif app['data']['release_date']['coming_soon'] == True:
-        print(f'[w] \'{appID}\' is not released yet.')
+        print(f'[i] \'{appID}\' is not released yet.')
         return None
       else:
         return app['data']
@@ -208,81 +203,57 @@ def Scraper(dataset, discarted, args):
 
     for appID in apps:
       if appID not in dataset and appID not in discarted:
-        app = ParseSteamRequest(appID, retryTime, successRequestCount, errorRequestCount, args.retries)
+        app = SteamRequest(appID, retryTime, successRequestCount, errorRequestCount, args.retries)
         if app:
-          name = app['name'].strip()
+          dataset[appID] = {}
+          dataset[appID]['name'] = app['name'].strip()
+          dataset[appID]['release_date'] = app['release_date'] if 'release_date' in app and not app['release_date']['coming_soon'] else ''
+          dataset[appID]['required_age'] = int(app['required_age']) if 'required_age' in app else 0
+          dataset[appID]['is_free'] = app['is_free']
+          dataset[appID]['price'] = app['price_overview']['final_formatted'] if 'price_overview' in app else ''
+          dataset[appID]['detailed_description'] = app['detailed_description'].strip() if 'detailed_description' in app else ''
+          dataset[appID]['about_the_game'] = app['about_the_game'].strip() if 'about_the_game' in app else ''
+          dataset[appID]['short_description'] = app['short_description'].strip() if 'short_description' in app else ''
+          dataset[appID]['supported_languages'] = app['supported_languages'] if 'supported_languages' in app else ''
+          dataset[appID]['header_image'] = app['header_image'].strip() if 'header_image' in app else ''
+          dataset[appID]['website'] = app['website'].strip() if 'website' in app and app['website'] is not None else ''
+          dataset[appID]['windows'] = True if app['platforms']['windows'] == 'true' else False
+          dataset[appID]['mac'] = True if app['platforms']['mac'] == 'true' else False
+          dataset[appID]['linux'] = True if app['platforms']['linux'] == 'true' else False
+          dataset[appID]['achievements'] = int(app['achievements']['total']) if 'achievements' in app else 0
 
-          release_date = app['release_date'] if 'release_date' in app and not app['release_date']['coming_soon'] else ''
-          required_age = int(app['required_age']) if 'required_age' in app else 0
-          is_free = app['is_free']
-          price = app['price_overview']['final_formatted'] if 'price_overview' in app else ''
-          detailed_description = app['detailed_description'].strip() if 'detailed_description' in app else ''
-          about_the_game = app['about_the_game'].strip() if 'about_the_game' in app else ''
-          short_description = app['short_description'].strip() if 'short_description' in app else ''
-          supported_languages = app['supported_languages'] if 'supported_languages' in app else ''
-          header_image = app['header_image'].strip() if 'header_image' in app else ''
-          website = app['website'].strip() if 'website' in app and app['website'] is not None else ''
-
-          developers = []
+          dataset[appID]['developers'] = []
           if 'developers' in app:
             for developer in app['developers']:
-              developers.append(developer.strip())
+              dataset[appID]['developers'].append(developer.strip())
 
-          publishers = []
+          dataset[appID]['publishers'] = []
           if 'publishers' in app:
             for publisher in app['publishers']:
-              publishers.append(publisher.strip())
+              dataset[appID]['publishers'].append(publisher.strip())
 
-          windows = True if app['platforms']['windows'] == 'true' else False
-          mac = True if app['platforms']['mac'] == 'true' else False
-          linux = True if app['platforms']['linux'] == 'true' else False
 
-          categories = []
+          dataset[appID]['categories'] = []
           if 'categories' in app:
             for category in app['categories']:
-              categories.append(category['description'])
+              dataset[appID]['categories'].append(category['description'])
 
-          genres = []
+          dataset[appID]['genres'] = []
           if 'genres' in app:
             for genre in app['genres']:
-              genres.append(genre['description'])
+              dataset[appID]['genres'].append(genre['description'])
 
-          screenshots = []
+          dataset[appID]['screenshots'] = []
           if 'screenshots' in app:
             for screenshot in app['screenshots']:
-              screenshots.append(screenshot['path_full'])
+              dataset[appID]['screenshots'].append(screenshot['path_full'])
 
-          movies = []
+          dataset[appID]['movies'] = []
           if 'movies' in app:
             for movie in app['movies']:
-              movies.append(movie['mp4']['max'])
+              dataset[appID]['movies'].append(movie['mp4']['max'])
 
-          achievements = int(app['achievements']['total']) if 'achievements' in app else 0
-
-          dataset[appID] = {}
-          dataset[appID]['name'] = name
-          dataset[appID]['release_date'] = release_date
-          dataset[appID]['required_age'] = required_age
-          dataset[appID]['is_free'] = is_free
-          dataset[appID]['price'] = price
-          dataset[appID]['detailed_description'] = detailed_description
-          dataset[appID]['about_the_game'] = about_the_game
-          dataset[appID]['short_description'] = short_description
-          dataset[appID]['supported_languages'] = supported_languages
-          dataset[appID]['header_image'] = header_image
-          dataset[appID]['website'] = website
-          dataset[appID]['developers'] = developers
-          dataset[appID]['publishers'] = publishers
-          dataset[appID]['windows'] = windows
-          dataset[appID]['mac'] = mac
-          dataset[appID]['linux'] = linux
-          dataset[appID]['categories'] = categories
-          dataset[appID]['genres'] = genres
-          dataset[appID]['screenshots'] = screenshots
-          dataset[appID]['movies'] = movies
-          dataset[appID]['achievements'] = achievements
-
-          print(f'[i] \'{name}\' added (#{len(dataset)}).')
+          print(f"[i] '{dataset[appID]['name']}' added (#{len(dataset)}).")
 
           gamesAdded += 1
 
@@ -305,10 +276,10 @@ def Scraper(dataset, discarted, args):
 
 if __name__ == "__main__":
   parser = argparse.ArgumentParser(description='Steam games scraper.')
-  parser.add_argument('-o', '--outfile', type=str, default=OUT_FILE, help='Output file name')
-  parser.add_argument('-s', '--sleep', type=float, default=1.5, help='Waiting time between requests')
-  parser.add_argument('-r', '--retries', type=int, default=4, help='Number of retries (0 to always retry)')
-  parser.add_argument('-a', '--autosave', type=int, default=100, help='Record the data every number of new entries (0 to deactivate)')
+  parser.add_argument('-o', '--outfile',  type=str,   default=DEFAULT_OUTFILE,  help='Output file name')
+  parser.add_argument('-s', '--sleep',    type=float, default=DEFAULT_SLEEP,    help='Waiting time between requests')
+  parser.add_argument('-r', '--retries',  type=int,   default=DEFAULT_RETRIES,  help='Number of retries (0 to always retry)')
+  parser.add_argument('-a', '--autosave', type=int,   default=DEFAULT_AUTOSAVE, help='Record the data every number of new entries (0 to deactivate)')
   args = parser.parse_args()
 
   if 'h' in args or 'help' in args:
