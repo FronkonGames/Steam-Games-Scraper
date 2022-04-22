@@ -47,8 +47,8 @@ def DoRequest(url, parameters=None, retryTime=4, successCount=0, errorCount=0, r
     if successCount > retryTime:
       retryTime = min(4, retryTime / 2)
       successCount = 0
-  elif retries > 0:
-    if errorCount < retries:
+  else:
+    if retries == 0 or errorCount < retries:
       print(f'[W] {response.reason}, retrying in {retryTime} seconds.')
       errorCount += 1
       successCount = 0
