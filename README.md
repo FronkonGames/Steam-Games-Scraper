@@ -71,7 +71,7 @@ The format is this:
 }
 ```
 
-Para cambiar el fichero de salida usa el parametro '_-o_' / '_-outfile_':
+To change the output file uses the parameter '_-o_' / '_-outfile_':
 
 ```
 python SteamGamesScraper.py -o output.json

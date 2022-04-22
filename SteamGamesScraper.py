@@ -47,16 +47,17 @@ def DoRequest(url, parameters=None, retryTime=4, successCount=0, errorCount=0, r
     if successCount > retryTime:
       retryTime = min(4, retryTime / 2)
       successCount = 0
-  elif retries > 0 and errorCount < retries:
-    print(f'[W] {response.reason}, retrying in {retryTime} seconds.')
-    errorCount += 1
-    successCount = 0
-    time.sleep(retryTime)
-    retryTime = min(retryTime * 2, 256)
-    return DoRequest(url, parameters, retryTime, successCount, errorCount, retries)
-  else:
-    print('[!!] Number of retries expired.')
-    sys.exit()
+  elif retries > 0:
+    if errorCount < retries:
+      print(f'[W] {response.reason}, retrying in {retryTime} seconds.')
+      errorCount += 1
+      successCount = 0
+      time.sleep(retryTime)
+      retryTime = min(retryTime * 2, 256)
+      return DoRequest(url, parameters, retryTime, successCount, errorCount, retries)
+    else:
+      print('[!!] Number of retries expired.')
+      sys.exit()
 
   return response
 
