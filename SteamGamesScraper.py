@@ -34,12 +34,27 @@ OUT_FILE        = 'games.json'
 DISCARTED_FILE  = 'discarted.json'
 
 def DoRequest(url, parameters=None, retryTime=4, successCount=0, errorCount=0, retries=0):
+  '''
+  Makes a Web request. If an error occurs, retry.
+  '''
   response = None
   try:
-    response = requests.get(url=url, params=parameters)
-  except SSLError as e:
-    print(f'[!!] {e}.')
-    sys.exit()
+    response = requests.get(url=url, params=parameters, timeout=5)
+  except requests.exceptions.HTTPError as ex:
+    print(f'[!!] An exception of type {type(ex).__name__} ocurred. Traceback: {traceback.format_exc()}')
+    response = None
+  except requests.exceptions.ConnectionError as ex:
+    print(f'[!!] An exception of type {type(ex).__name__} ocurred. Traceback: {traceback.format_exc()}')
+    response = None
+  except requests.exceptions.Timeout as ex:
+    print(f'[!!] An exception of type {type(ex).__name__} ocurred. Traceback: {traceback.format_exc()}')
+    response = None
+  except requests.exceptions.RequestException as ex:
+    print(f'[!!] An exception of type {type(ex).__name__} ocurred. Traceback: {traceback.format_exc()}')
+    response = None
+  except SSLError as ex:
+    print(f'[!!] An exception of type {type(ex).__name__} ocurred. Traceback: {traceback.format_exc()}')
+    response = None
 
   if response and response.status_code == 200:
     errorCount = 0
@@ -62,6 +77,9 @@ def DoRequest(url, parameters=None, retryTime=4, successCount=0, errorCount=0, r
   return response
 
 def ParseSteamRequest(appID, retryTime, successRequestCount, errorRequestCount, retries):
+  '''
+  Request information about a Steam app.
+  '''
   url = "http://store.steampowered.com/api/appdetails/"
   response = DoRequest(url, {"appids": appID}, retryTime, successRequestCount, errorRequestCount, retries)
   if response:
@@ -86,14 +104,17 @@ def ParseSteamRequest(appID, retryTime, successRequestCount, errorRequestCount, 
         return None
       else:
         return app['data']
-    except:
-      print(f'[!!] {traceback.format_exc()}')
+    except Exception as ex:
+      print(f'[!!] An exception of type {type(ex).__name__} ocurred. Traceback: {traceback.format_exc()}')
       return None
   else:
     print('[!] Bad response.')
     return None
 
 def LoadDataset(args):
+  '''
+  Load the dataset file.
+  '''
   dataset = {}
   try:
     if exists(args.outfile):
@@ -108,11 +129,14 @@ def LoadDataset(args):
       print('[i] New dataset created.')
 
     return dataset
-  except:
-    print(f'[!!] {traceback.format_exc()}')
+  except Exception as ex:
+    print(f'[!!] An exception of type {type(ex).__name__} ocurred. Traceback: {traceback.format_exc()}')
     sys.exit()
 
 def LoadDiscarted():
+  '''
+  Load a file with discarded apps.
+  '''
   discarted = []
   try:
     if exists(DISCARTED_FILE):
@@ -123,8 +147,8 @@ def LoadDiscarted():
           print(f'[i] {len(discarted)} games discarted.')
 
     return discarted
-  except:
-    print(f'[!!] {traceback.format_exc()}')
+  except Exception as ex:
+    print(f'[!!] An exception of type {type(ex).__name__} ocurred. Traceback: {traceback.format_exc()}')
     sys.exit()
 
 def SaveDataset(dataset, args):
@@ -133,21 +157,27 @@ def SaveDataset(dataset, args):
       fout.seek(0)
       fout.write(json.dumps(dataset, indent=4, ensure_ascii=False))
       fout.truncate()
-  except:
-    print(f'[!!] {traceback.format_exc()}')
+  except Exception as ex:
+    print(f'[!!] An exception of type {type(ex).__name__} ocurred. Traceback: {traceback.format_exc()}')
     sys.exit()
 
 def SaveDiscarted(discarted):
+  '''
+  Record all discarded apps in a file.
+  '''
   try:
     with open(DISCARTED_FILE, 'w', encoding='utf-8') as fout:
       fout.seek(0)
       fout.write(json.dumps(discarted, indent=4, ensure_ascii=False))
       fout.truncate()
-  except:
-    print(f'[!!] {traceback.format_exc()}')
+  except Exception as ex:
+    print(f'[!!] An exception of type {type(ex).__name__} ocurred. Traceback: {traceback.format_exc()}')
     sys.exit()
 
 def Scraper(dataset, discarted, args):
+  '''
+  Search games in Steam.
+  '''
   apps = []
   if exists(APPLIST_FILE):
     with open(APPLIST_FILE, 'r', encoding='utf-8') as fin:
@@ -252,7 +282,7 @@ def Scraper(dataset, discarted, args):
           dataset[appID]['movies'] = movies
           dataset[appID]['achievements'] = achievements
 
-          print(f'[i] Game \'{name}\' added ({len(dataset)}).')
+          print(f'[i] \'{name}\' added (#{len(dataset)}).')
 
           gamesAdded += 1
 

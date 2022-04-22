@@ -44,10 +44,10 @@ The format is this:
         "header_image": "https://cdn.akamai.steamstatic.com/steam/apps/906850/header.jpg?t=1629556612",
         "website": "",
         "developers": [
-            "KillGame"
+            "Developer Name"
         ],
         "publishers": [
-            "HandMade Games"
+            "Publisher Name"
         ],
         "windows": false,
         "mac": false,
@@ -59,8 +59,8 @@ The format is this:
             "Indie"
         ],
         "screenshots": [
-            "https://cdn.akamai.steamstatic.com/steam/apps/906850/ss_771b01cae86ac9ab0ba9b2e14f27ec8d8d04e3ae.1920x1080.jpg?t=1629556612",
-            "https://cdn.akamai.steamstatic.com/steam/apps/906850/ss_cbae6cabaaeff0ab297514dd6b7bf3231702f4eb.1920x1080.jpg?t=1629556612"
+            "https://cdn.akamai.steamstatic.com/steam/apps/906850/ss_771b0.1920x1080.jpg?t=1629556612",
+            "https://cdn.akamai.steamstatic.com/steam/apps/906850/ss_cbae6.1920x1080.jpg?t=1629556612"
         ],
         "movies": [
             "http://cdn.akamai.steamstatic.com/steam/apps/256722964/movie_max.mp4?t=1532169660"
@@ -83,18 +83,18 @@ Steam can reject, or even banner your IP, if he considers that you are doing too
 python SteamGamesScraper.py -s 0.5
 ```
 
-> **It is not recommended to download the waiting time of 1.5 seconds.**
+> **It is not recommended to download the wait time below 1.5 seconds.**
 
-When Steam denies a request, by default it is trying up to four times. Puedes cambiar el numero de reintentos con '_-r_' / '_-retries_':
+When Steam denies a request, by default it is trying up to four times. You can change the number of retries with '_-r_' / '_-retries_':
 
 ```
 python SteamGamesScraper.py -r 10
 ```
 
-> **Although it is not recommended, you can always retry by changing the value to 0.**
+> **Although it is not recommended, you can set always retry by changing the value to 0.**
 
 
-At the end of the scan, or by pressing _Ctrl + C_, all data are recorded. You can activate the _auto-save_ to activate each X new entries:
+At the end of the scan, or by pressing _Ctrl + C_, all data are recorded. You can activate the _auto-save_ to activate each X new entries with '_-a_' / '_-autosave_':
 
 ```
 python SteamGamesScraper.py -a 100
