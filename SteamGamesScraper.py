@@ -20,15 +20,14 @@ __license__ = "MIT"
 __version__ = "1.0.0"
 __email__ = "fronkongames@gmail.com"
 
-from ast import arg
 import sys
 import os
-import argparse
 from ssl import SSLError
 import requests
 import json
 import time
 import traceback
+import argparse
 
 DEFAULT_OUTFILE  = 'games.json'
 APPLIST_FILE     = 'applist.json'
@@ -117,7 +116,7 @@ def ParseGame(app):
   game = {}
   game['name'] = app['name'].strip()
   game['release_date'] = app['release_date'] if 'release_date' in app and not app['release_date']['coming_soon'] else ''
-  game['required_age'] = int(app['required_age']) if 'required_age' in app else 0
+  game['required_age'] = int(str(app['required_age']).replace('+', '')) if 'required_age' in app else 0
   game['is_free'] = app['is_free']
   game['price'] = app['price_overview']['final_formatted'] if 'price_overview' in app else ''
   game['detailed_description'] = app['detailed_description'].strip() if 'detailed_description' in app else ''
