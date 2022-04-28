@@ -128,7 +128,11 @@ def ParseGame(app):
   game['windows'] = True if app['platforms']['windows'] else False
   game['mac'] = True if app['platforms']['mac'] else False
   game['linux'] = True if app['platforms']['linux'] else False
+  game['metacritic_score'] = str(app['metacritic']['score']) if 'metacritic' in app else ''
+  game['metacritic_url'] = app['metacritic']['url'] if 'metacritic' in app else ''
   game['achievements'] = int(app['achievements']['total']) if 'achievements' in app else 0
+  game['recommendations'] = app['recommendations']['total'] if 'recommendations' in app else 0
+  game['notes'] = app['content_descriptors']['notes'] if 'content_descriptors' in app else ''
 
   game['developers'] = []
   if 'developers' in app:
