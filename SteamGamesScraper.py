@@ -22,6 +22,7 @@ __email__ = "fronkongames@gmail.com"
 
 import sys
 import os
+import re
 from ssl import SSLError
 import requests
 import json
@@ -115,24 +116,44 @@ def ParseGame(app):
   '''
   game = {}
   game['name'] = app['name'].strip()
-  game['release_date'] = app['release_date'] if 'release_date' in app and not app['release_date']['coming_soon'] else ''
+  game['release_date'] = app['release_date']['date'] if 'release_date' in app and not app['release_date']['coming_soon'] else ''
   game['required_age'] = int(str(app['required_age']).replace('+', '')) if 'required_age' in app else 0
-  game['is_free'] = app['is_free']
-  game['price'] = app['price_overview']['final_formatted'] if 'price_overview' in app else ''
+
+  if app['is_free'] or 'price_overview' not in app:
+    game['price'] = 0.0
+  else:
+    game['price'] = round(float(re.findall('([0-9]+[,.]+[0-9]+)', app['price_overview']['final_formatted'])[0]), 2)
+
+  game['dlc_count'] = len(app['dlc']) if 'dlc' in app else 0
   game['detailed_description'] = app['detailed_description'].strip() if 'detailed_description' in app else ''
   game['about_the_game'] = app['about_the_game'].strip() if 'about_the_game' in app else ''
   game['short_description'] = app['short_description'].strip() if 'short_description' in app else ''
   game['supported_languages'] = app['supported_languages'] if 'supported_languages' in app else ''
+  game['reviews'] = app['reviews'].strip() if 'reviews' in app else ''
   game['header_image'] = app['header_image'].strip() if 'header_image' in app else ''
   game['website'] = app['website'].strip() if 'website' in app and app['website'] is not None else ''
+  game['support_url'] = app['support_info']['url'].strip() if 'support_info' in app else ''
+  game['support_email'] = app['support_info']['email'].strip() if 'support_info' in app else ''
   game['windows'] = True if app['platforms']['windows'] else False
   game['mac'] = True if app['platforms']['mac'] else False
   game['linux'] = True if app['platforms']['linux'] else False
-  game['metacritic_score'] = str(app['metacritic']['score']) if 'metacritic' in app else ''
+  game['metacritic_score'] = int(app['metacritic']['score']) if 'metacritic' in app else 0
   game['metacritic_url'] = app['metacritic']['url'] if 'metacritic' in app else ''
   game['achievements'] = int(app['achievements']['total']) if 'achievements' in app else 0
   game['recommendations'] = app['recommendations']['total'] if 'recommendations' in app else 0
-  game['notes'] = app['content_descriptors']['notes'] if 'content_descriptors' in app else ''
+  game['notes'] = app['content_descriptors']['notes'] if 'content_descriptors' in app and app['content_descriptors']['notes'] is not None else ''
+
+  game['packages'] = []
+  if 'package_groups' in app:
+    for package in app['package_groups']:
+      subs = []
+      if 'subs' in package:
+        for sub in package['subs']:
+          subs.append({'text': sub['option_text'],
+                       'description': sub['option_description'],
+                       'price': round(float(sub['price_in_cents_with_discount']) * 0.01, 2) })
+
+      game['packages'].append({'title': package['title'], 'description': package['description'], 'subs': subs})
 
   game['developers'] = []
   if 'developers' in app:
