@@ -104,7 +104,7 @@ def SteamRequest(appID, retryTime, successRequestCount, errorRequestCount, retri
       else:
         return app['data']
     except Exception as ex:
-      print(f'[!!] An exception of type {type(ex).__name__} ocurred. Traceback: {traceback.format_exc()}')
+      print(f'[!!] Exception \'{ex}\' raise.')
       return None
   else:
     print('[!] Bad response.')
