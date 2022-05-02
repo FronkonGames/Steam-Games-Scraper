@@ -29,6 +29,7 @@ import json
 import time
 import traceback
 import argparse
+import datetime as dt
 
 DEFAULT_OUTFILE  = 'games.json'
 APPLIST_FILE     = 'applist.json'
@@ -38,6 +39,14 @@ DEFAULT_RETRIES  = 4
 DEFAULT_AUTOSAVE = 100
 DEFAULT_TIMEOUT  = 5
 DEFAULT_CURRENCY = 'us'
+LOG_ICON         = ['i', 'W', '!', '!!']
+INFO             = 0
+WARNING          = 1
+ERROR            = 2
+EXCEPTION        = 3
+
+def Log(level, message):
+  print(f"[{LOG_ICON[level]} {dt.datetime.now().strftime('%H:%M:%S')}] {message}.")
 
 def DoRequest(url, parameters=None, retryTime=4, successCount=0, errorCount=0, retries=0):
   '''
@@ -49,7 +58,7 @@ def DoRequest(url, parameters=None, retryTime=4, successCount=0, errorCount=0, r
   except (requests.exceptions.HTTPError, requests.exceptions.ConnectionError,
           requests.exceptions.Timeout, requests.exceptions.RequestException,
           SSLError) as ex:
-    print(f'[!!] An exception of type {type(ex).__name__} ocurred. Traceback: {traceback.format_exc()}')
+    Log(EXCEPTION, f'An exception of type {type(ex).__name__} ocurred. Traceback: {traceback.format_exc()}')
     response = None
 
   if response and response.status_code == 200:
@@ -61,9 +70,9 @@ def DoRequest(url, parameters=None, retryTime=4, successCount=0, errorCount=0, r
   else:
     if retries == 0 or errorCount < retries:
       if response is not None:
-        print(f'[W] {response.reason}, retrying in {retryTime} seconds.')
+        Log(WARNING, f'{response.reason}, retrying in {retryTime} seconds')
       else:
-        print(f'[W] Request failed, retrying in {retryTime} seconds.')
+        Log(WARNING, f'Request failed, retrying in {retryTime} seconds.')
       errorCount += 1
       successCount = 0
       time.sleep(retryTime)
@@ -86,28 +95,28 @@ def SteamRequest(appID, retryTime, successRequestCount, errorRequestCount, retri
       data = response.json()
       app = data[appID]
       if app['success'] == False:
-        print(f'[w] \'{appID}\' detail not available.')
+        Log(WARNING, f'\'{appID}\' detail not available')
         return None
       elif app['data']['type'] != 'game':
         type = app['data']['type']
-        print(f'[i] \'{appID}\' is not a game ({type}).')
+        Log(INFO, f'\'{appID}\' is not a game ({type})')
         return None
       elif app['data']['is_free'] == False and 'price_overview' in app['data'] and app['data']['price_overview']['final_formatted'] == '':
-        print(f'[w] \'{appID}\' is not free but has no price.')
+        Log(WARNING, f'\'{appID}\' is not free but has no price')
         return None
       elif 'developers' in app['data'] and len(app['data']['developers']) == 0:
-        print(f'[w] \'{appID}\' has no developers.')
+        Log(WARNING, f'\'{appID}\' has no developers')
         return None
       elif app['data']['release_date']['coming_soon'] == True:
-        print(f'[i] \'{appID}\' is not released yet.')
+        Log(INFO, f'\'{appID}\' is not released yet.')
         return None
       else:
         return app['data']
     except Exception as ex:
-      print(f'[!!] Exception \'{ex}\' raise.')
+      Log(EXCEPTION, f'An exception of type {ex} ocurred. Traceback: {traceback.format_exc()}')
       return None
   else:
-    print('[!] Bad response.')
+    Log(ERROR, 'Bad response')
     return None
 
 def ParseGame(app):
@@ -198,15 +207,15 @@ def LoadDataset(args):
         text = fin.read()
         if len(text) > 0:
           dataset = json.loads(text)
-          print(f'[i] Dataset loaded with {len(dataset)} games.')
+          Log(INFO, f'Dataset loaded with {len(dataset)} games')
         else:
-          print('[i] New dataset created.')
+          Log(INFO, 'New dataset created')
     else:
-      print('[i] New dataset created.')
+      Log(INFO, 'New dataset created')
 
     return dataset
   except Exception as ex:
-    print(f'[!!] An exception of type {type(ex).__name__} ocurred. Traceback: {traceback.format_exc()}')
+    Log(EXCEPTION, f'An exception of type {ex} ocurred. Traceback: {traceback.format_exc()}')
     sys.exit()
 
 def LoadDiscarted():
@@ -220,11 +229,11 @@ def LoadDiscarted():
         text = fin.read()
         if len(text) > 0:
           discarted = json.loads(text)
-          print(f'[i] {len(discarted)} apps discarted.')
+          Log(INFO, f'{len(discarted)} apps discarted')
 
     return discarted
   except Exception as ex:
-    print(f'[!!] An exception of type {type(ex).__name__} ocurred. Traceback: {traceback.format_exc()}')
+    Log(EXCEPTION, f'An exception of type {ex} ocurred. Traceback: {traceback.format_exc()}')
     sys.exit()
 
 def SaveDataset(dataset, args):
@@ -234,7 +243,7 @@ def SaveDataset(dataset, args):
       fout.write(json.dumps(dataset, indent=4, ensure_ascii=False))
       fout.truncate()
   except Exception as ex:
-    print(f'[!!] An exception of type {type(ex).__name__} ocurred. Traceback: {traceback.format_exc()}')
+    Log(EXCEPTION, f'An exception of type {ex} ocurred. Traceback: {traceback.format_exc()}')
     sys.exit()
 
 def SaveDiscarted(discarted):
@@ -247,7 +256,7 @@ def SaveDiscarted(discarted):
       fout.write(json.dumps(discarted, indent=4, ensure_ascii=False))
       fout.truncate()
   except Exception as ex:
-    print(f'[!!] An exception of type {type(ex).__name__} ocurred. Traceback: {traceback.format_exc()}')
+    Log(EXCEPTION, f'An exception of type {ex} ocurred. Traceback: {traceback.format_exc()}')
     sys.exit()
 
 def Scraper(dataset, discarted, args):
@@ -260,9 +269,9 @@ def Scraper(dataset, discarted, args):
       text = fin.read()
       if len(text) > 0:
         apps = json.loads(text)
-        print(f'[i] List with {len(apps)} games loaded.')
+        Log(INFO, f'List with {len(apps)} games loaded')
   else:
-    print('[i] Requesting list of games from Steam.')
+    Log(INFO, 'Requesting list of games from Steam')
     response = DoRequest('http://api.steampowered.com/ISteamApps/GetAppList/v2/')
     if response:
       time.sleep(args.sleep)
@@ -275,7 +284,7 @@ def Scraper(dataset, discarted, args):
         fout.truncate()
 
   if apps:
-    print(f'[i] Scanning {len(apps) - len(discarted)} apps (CTRL+C to exit).')
+    Log(INFO, f'Scanning {len(apps) - len(discarted)} apps (CTRL+C to exit)')
     gamesAdded = 0
     gamesDiscarted = 0
     retryTime = 4
@@ -288,12 +297,12 @@ def Scraper(dataset, discarted, args):
         if app:
           dataset[appID] = ParseGame(app)
 
-          print(f"[i] '{dataset[appID]['name']}' added (#{len(dataset)}).")
+          Log(INFO, f"'{dataset[appID]['name']}' added (#{len(dataset)})")
 
           gamesAdded += 1
 
           if args.autosave > 0 and (gamesAdded + gamesDiscarted) % args.autosave == 0:
-            print('[i] Autosaving.')
+            Log(INFO, 'Autosaving')
             SaveDataset(dataset, args)
             SaveDiscarted(discarted)
         else:
@@ -304,13 +313,13 @@ def Scraper(dataset, discarted, args):
 
     SaveDataset(dataset)
     SaveDiscarted(discarted)
-    print(f'[i] {gamesAdded} new games added, {gamesDiscarted} discarted.')
+    Log(INFO, f'{gamesAdded} new games added, {gamesDiscarted} discarted')
   else:
-    print('[!!] Error requesting list of games.')
+    Log(ERROR, 'Error requesting list of games')
     sys.exit()
 
 if __name__ == "__main__":
-  print(f'[i] Steam Games Scraper {__version__} by {__author__}.')
+  print(f'Steam Games Scraper {__version__} by {__author__}.')
   parser = argparse.ArgumentParser(description='Steam games scraper.')
   parser.add_argument('-o', '--outfile',  type=str,   default=DEFAULT_OUTFILE,  help='Output file name')
   parser.add_argument('-s', '--sleep',    type=float, default=DEFAULT_SLEEP,    help='Waiting time between requests')
@@ -331,4 +340,5 @@ if __name__ == "__main__":
   except (KeyboardInterrupt, SystemExit):
     SaveDataset(dataset, args)
     SaveDiscarted(discarted)
-    print('[i] Done.')
+
+  Log(INFO, 'Done')
