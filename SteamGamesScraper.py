@@ -108,7 +108,7 @@ def SteamRequest(appID, retryTime, successRequestCount, errorRequestCount, retri
         Log(WARNING, f'\'{appID}\' has no developers')
         return None
       elif app['data']['release_date']['coming_soon'] == True:
-        Log(INFO, f'\'{appID}\' is not released yet.')
+        Log(INFO, f'\'{appID}\' is not released yet')
         return None
       else:
         return app['data']
@@ -236,8 +236,12 @@ def LoadDiscarted():
     Log(EXCEPTION, f'An exception of type {ex} ocurred. Traceback: {traceback.format_exc()}')
     sys.exit()
 
-def SaveDataset(dataset, args):
+def SaveDataset(dataset, args, backup = False):
   try:
+    if backup == True and os.path.exists(args.outfile):
+      filename, ext = os.path.splitext(args.outfile)
+      os.rename(args.outfile, filename + '.bak')
+
     with open(args.outfile, 'w', encoding='utf-8') as fout:
       fout.seek(0)
       fout.write(json.dumps(dataset, indent=4, ensure_ascii=False))
@@ -303,7 +307,7 @@ def Scraper(dataset, discarted, args):
 
           if args.autosave > 0 and (gamesAdded + gamesDiscarted) % args.autosave == 0:
             Log(INFO, 'Autosaving')
-            SaveDataset(dataset, args)
+            SaveDataset(dataset, args, True)
             SaveDiscarted(discarted)
         else:
           discarted.append(appID)
