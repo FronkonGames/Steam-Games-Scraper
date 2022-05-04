@@ -96,7 +96,7 @@ The format is this:
 }
 ```
 
-In the file '_ParesExample.py_' you can see a simple example of how to parse the information.
+In the file '_ParseExample.py_' you can see a simple example of how to parse the information.
 
 # ⚙️ Parameters
 
