@@ -37,18 +37,18 @@ The format is this:
 ```
 {
     "906850": {
-        "name": "Game Name",
+        "name": "...",
         "release_date": {
             "coming_soon": false,
-            "date": "8 Aug, 2018"
+            "date": "..."
         },
         "required_age": 0,
         "is_free": false,
         "price": 0.99,
         "detailed_description": "...",
-        "supported_languages": "English",
+        "supported_languages": "...",
         "reviews": "...",
-        "header_image": "https://cdn.akamai.steamstatic.com/steam/apps/906850/header.jpg?t=1629556612",
+        "header_image": "...",
         "website": "...",
         "support_url": "...",
         "support_email": "...",
