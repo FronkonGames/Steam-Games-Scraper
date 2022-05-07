@@ -107,9 +107,9 @@ def SteamRequest(appID, retryTime, successRequestCount, errorRequestCount, retri
       elif 'developers' in app['data'] and len(app['data']['developers']) == 0:
         Log(WARNING, f'\'{appID}\' has no developers')
         return None
-      elif app['data']['release_date']['coming_soon'] == True:
-        Log(INFO, f'\'{appID}\' is not released yet')
-        return None
+      # elif app['data']['release_date']['coming_soon'] == True:
+      #   Log(INFO, f'\'{appID}\' is not released yet')
+      #   return None
       else:
         return app['data']
     except Exception as ex:
@@ -301,11 +301,13 @@ def Scraper(dataset, discarted, args):
         if app:
           dataset[appID] = ParseGame(app)
 
-          Log(INFO, f"'{dataset[appID]['name']}' added (#{len(dataset)})")
+          if dataset[appID]['release_date'] != '':
+            Log(INFO, f"'{dataset[appID]['name']}' added (#{len(dataset)})")
+            gamesAdded += 1
+          else:
+            Log(INFO, f"'{dataset[appID]['name']}' is not released yet")
 
-          gamesAdded += 1
-
-          if args.autosave > 0 and (gamesAdded + gamesDiscarted) % args.autosave == 0:
+          if args.autosave > 0 and gamesAdded % args.autosave == 0:
             Log(INFO, 'Autosaving')
             SaveDataset(dataset, args, True)
             SaveDiscarted(discarted)
