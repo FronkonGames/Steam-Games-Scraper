@@ -315,7 +315,7 @@ def Scraper(dataset, discarted, args):
 
         time.sleep(args.sleep)
 
-    SaveDataset(dataset)
+    SaveDataset(dataset, args)
     SaveDiscarted(discarted)
     Log(INFO, f'{gamesAdded} new games added, {gamesDiscarted} discarted')
   else:
