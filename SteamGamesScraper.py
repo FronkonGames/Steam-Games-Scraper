@@ -288,7 +288,7 @@ def Scraper(dataset, discarted, args):
         fout.truncate()
 
   if apps:
-    Log(INFO, f'Scanning {len(apps) - len(discarted)} apps (CTRL+C to exit)')
+    Log(INFO, f'Scanning {len(apps) - (len(dataset) + len(discarted))} apps (CTRL+C to exit)')
     gamesAdded = 0
     gamesDiscarted = 0
     retryTime = 4
