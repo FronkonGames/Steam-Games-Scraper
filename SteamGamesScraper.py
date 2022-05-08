@@ -299,21 +299,24 @@ def Scraper(dataset, discarted, args):
       if appID not in dataset and appID not in discarted:
         app = SteamRequest(appID, retryTime, successRequestCount, errorRequestCount, args.retries)
         if app:
-          dataset[appID] = ParseGame(app)
-
-          if dataset[appID]['release_date'] != '':
-            Log(INFO, f"'{dataset[appID]['name']}' added (#{len(dataset)})")
+          game = ParseGame(app)
+          if game['release_date'] != '':
+            Log(INFO, f"'{game['name']}' added (#{len(dataset)})")
+            dataset[appID] = game
             gamesAdded += 1
           else:
-            Log(INFO, f"'{dataset[appID]['name']}' is not released yet")
-
-          if args.autosave > 0 and gamesAdded % args.autosave == 0:
-            Log(INFO, 'Autosaving')
-            SaveDataset(dataset, args, True)
-            SaveDiscarted(discarted)
+            Log(INFO, f"'{game['name']}' is not released yet")
         else:
           discarted.append(appID)
           gamesDiscarted += 1
+
+        if args.autosave > 0 and gamesAdded % args.autosave == 0:
+          Log(INFO, 'Autosaving dataset')
+          SaveDataset(dataset, args, True)
+
+        if args.autosave > 0 and gamesDiscarted % args.autosave == 0:
+          Log(INFO, 'Autosaving discarted')
+          SaveDiscarted(discarted)
 
         time.sleep(args.sleep)
 
