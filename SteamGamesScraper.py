@@ -240,7 +240,7 @@ def SaveDataset(dataset, args, backup = False):
   try:
     if backup == True and os.path.exists(args.outfile):
       filename, ext = os.path.splitext(args.outfile)
-      os.rename(args.outfile, filename + '.bak')
+      os.replace(args.outfile, filename + '.bak')
 
     with open(args.outfile, 'w', encoding='utf-8') as fout:
       fout.seek(0)
@@ -304,17 +304,17 @@ def Scraper(dataset, discarted, args):
             Log(INFO, f"'{game['name']}' added (#{len(dataset)})")
             dataset[appID] = game
             gamesAdded += 1
+
+            if args.autosave > 0 and gamesAdded > 0 and gamesAdded % args.autosave == 0:
+              Log(INFO, 'Autosaving dataset')
+              SaveDataset(dataset, args, True)
           else:
             Log(INFO, f"'{game['name']}' is not released yet")
         else:
           discarted.append(appID)
           gamesDiscarted += 1
 
-        if args.autosave > 0 and gamesAdded % args.autosave == 0:
-          Log(INFO, 'Autosaving dataset')
-          SaveDataset(dataset, args, True)
-
-        if args.autosave > 0 and gamesDiscarted % args.autosave == 0:
+        if args.autosave > 0 and gamesDiscarted > 0 and gamesDiscarted % args.autosave == 0:
           Log(INFO, 'Autosaving discarted')
           SaveDiscarted(discarted)
 
