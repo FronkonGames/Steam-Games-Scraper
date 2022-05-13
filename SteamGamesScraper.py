@@ -254,8 +254,8 @@ def SaveDiscarted(discarted, backup = False):
   '''
   try:
     if backup == True and os.path.exists(DISCARTED_FILE):
-      filename, ext = os.path.splitext(args.outfile)
-      os.replace(args.outfile, filename + '.bak')
+      filename, ext = os.path.splitext(DISCARTED_FILE)
+      os.replace(DISCARTED_FILE, filename + '.bak')
 
     with open(DISCARTED_FILE, 'w', encoding='utf-8') as fout:
       fout.seek(0)
