@@ -29,6 +29,7 @@ import json
 import time
 import traceback
 import argparse
+import random
 import datetime as dt
 
 DEFAULT_OUTFILE  = 'games.json'
@@ -95,7 +96,7 @@ def SteamRequest(appID, retryTime, successRequestCount, errorRequestCount, retri
       data = response.json()
       app = data[appID]
       if app['success'] == False:
-        Log(WARNING, f'\'{appID}\' detail not available')
+        Log(WARNING, f'\'{appID}\' info not available')
         return None
       elif app['data']['type'] != 'game':
         type = app['data']['type']
@@ -107,9 +108,6 @@ def SteamRequest(appID, retryTime, successRequestCount, errorRequestCount, retri
       elif 'developers' in app['data'] and len(app['data']['developers']) == 0:
         Log(WARNING, f'\'{appID}\' has no developers')
         return None
-      # elif app['data']['release_date']['coming_soon'] == True:
-      #   Log(INFO, f'\'{appID}\' is not released yet')
-      #   return None
       else:
         return app['data']
     except Exception as ex:
@@ -218,6 +216,20 @@ def LoadDataset(args):
     Log(EXCEPTION, f'An exception of type {ex} ocurred. Traceback: {traceback.format_exc()}')
     sys.exit()
 
+def SaveDataset(dataset, args, backup = False):
+  try:
+    if backup == True and os.path.exists(args.outfile):
+      filename, ext = os.path.splitext(args.outfile)
+      os.replace(args.outfile, filename + '.bak')
+
+    with open(args.outfile, 'w', encoding='utf-8') as fout:
+      fout.seek(0)
+      fout.write(json.dumps(dataset, indent=4, ensure_ascii=False))
+      fout.truncate()
+  except Exception as ex:
+    Log(EXCEPTION, f'An exception of type {ex} ocurred. Traceback: {traceback.format_exc()}')
+    sys.exit()
+
 def LoadDiscarted():
   '''
   Load a file with discarded apps.
@@ -236,25 +248,15 @@ def LoadDiscarted():
     Log(EXCEPTION, f'An exception of type {ex} ocurred. Traceback: {traceback.format_exc()}')
     sys.exit()
 
-def SaveDataset(dataset, args, backup = False):
-  try:
-    if backup == True and os.path.exists(args.outfile):
-      filename, ext = os.path.splitext(args.outfile)
-      os.replace(args.outfile, filename + '.bak')
-
-    with open(args.outfile, 'w', encoding='utf-8') as fout:
-      fout.seek(0)
-      fout.write(json.dumps(dataset, indent=4, ensure_ascii=False))
-      fout.truncate()
-  except Exception as ex:
-    Log(EXCEPTION, f'An exception of type {ex} ocurred. Traceback: {traceback.format_exc()}')
-    sys.exit()
-
-def SaveDiscarted(discarted):
+def SaveDiscarted(discarted, backup = False):
   '''
   Record all discarded apps in a file.
   '''
   try:
+    if backup == True and os.path.exists(DISCARTED_FILE):
+      filename, ext = os.path.splitext(args.outfile)
+      os.replace(args.outfile, filename + '.bak')
+
     with open(DISCARTED_FILE, 'w', encoding='utf-8') as fout:
       fout.seek(0)
       fout.write(json.dumps(discarted, indent=4, ensure_ascii=False))
@@ -295,6 +297,7 @@ def Scraper(dataset, discarted, args):
     successRequestCount = 0
     errorRequestCount = 0
 
+    random.shuffle(apps)
     for appID in apps:
       if appID not in dataset and appID not in discarted:
         app = SteamRequest(appID, retryTime, successRequestCount, errorRequestCount, args.retries)
@@ -306,7 +309,7 @@ def Scraper(dataset, discarted, args):
             gamesAdded += 1
 
             if args.autosave > 0 and gamesAdded > 0 and gamesAdded % args.autosave == 0:
-              Log(INFO, 'Autosaving dataset')
+              Log(INFO, f'Autosaving dataset (#{len(dataset)})')
               SaveDataset(dataset, args, True)
           else:
             Log(INFO, f"'{game['name']}' is not released yet")
@@ -315,8 +318,8 @@ def Scraper(dataset, discarted, args):
           gamesDiscarted += 1
 
         if args.autosave > 0 and gamesDiscarted > 0 and gamesDiscarted % args.autosave == 0:
-          Log(INFO, 'Autosaving discarted')
-          SaveDiscarted(discarted)
+          Log(INFO, f'Autosaving discarted (#{len(discarted)})')
+          SaveDiscarted(discarted, True)
 
         time.sleep(args.sleep)
 
