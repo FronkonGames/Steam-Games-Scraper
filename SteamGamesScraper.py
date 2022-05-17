@@ -35,7 +35,8 @@ import datetime as dt
 DEFAULT_OUTFILE  = 'games.json'
 APPLIST_FILE     = 'applist.json'
 DISCARTED_FILE   = 'discarted.json'
-DEFAULT_SLEEP    = 1.5
+NOTRELEASED_FILE = 'notreleased.json'
+DEFAULT_SLEEP    = 3.0
 DEFAULT_RETRIES  = 4
 DEFAULT_AUTOSAVE = 100
 DEFAULT_TIMEOUT  = 5
@@ -194,78 +195,38 @@ def ParseGame(app):
 
   return game
 
-def LoadDataset(args):
-  '''
-  Load the dataset file.
-  '''
-  dataset = {}
+def SaveJSON(data, filename, backup = False):
   try:
-    if os.path.exists(args.outfile):
-      with open(args.outfile, 'r', encoding='utf-8') as fin:
-        text = fin.read()
-        if len(text) > 0:
-          dataset = json.loads(text)
-          Log(INFO, f'Dataset loaded with {len(dataset)} games')
-        else:
-          Log(INFO, 'New dataset created')
-    else:
-      Log(INFO, 'New dataset created')
+    if backup == True and os.path.exists(filename):
+      name, ext = os.path.splitext(filename)
+      os.replace(filename, name + '.bak')
 
-    return dataset
-  except Exception as ex:
-    Log(EXCEPTION, f'An exception of type {ex} ocurred. Traceback: {traceback.format_exc()}')
-    sys.exit()
-
-def SaveDataset(dataset, args, backup = False):
-  try:
-    if backup == True and os.path.exists(args.outfile):
-      filename, ext = os.path.splitext(args.outfile)
-      os.replace(args.outfile, filename + '.bak')
-
-    with open(args.outfile, 'w', encoding='utf-8') as fout:
+    with open(filename, 'w', encoding='utf-8') as fout:
       fout.seek(0)
-      fout.write(json.dumps(dataset, indent=4, ensure_ascii=False))
+      fout.write(json.dumps(data, indent=4, ensure_ascii=False))
       fout.truncate()
   except Exception as ex:
     Log(EXCEPTION, f'An exception of type {ex} ocurred. Traceback: {traceback.format_exc()}')
     sys.exit()
 
-def LoadDiscarted():
+def LoadJSON(filename):
   '''
   Load a file with discarded apps.
   '''
-  discarted = []
+  data = None
   try:
-    if os.path.exists(DISCARTED_FILE):
-      with open(DISCARTED_FILE, 'r', encoding='utf-8') as fin:
+    if os.path.exists(filename):
+      with open(filename, 'r', encoding='utf-8') as fin:
         text = fin.read()
         if len(text) > 0:
-          discarted = json.loads(text)
-          Log(INFO, f'{len(discarted)} apps discarted')
-
-    return discarted
+          data = json.loads(text)
   except Exception as ex:
     Log(EXCEPTION, f'An exception of type {ex} ocurred. Traceback: {traceback.format_exc()}')
     sys.exit()
 
-def SaveDiscarted(discarted, backup = False):
-  '''
-  Record all discarded apps in a file.
-  '''
-  try:
-    if backup == True and os.path.exists(DISCARTED_FILE):
-      filename, ext = os.path.splitext(DISCARTED_FILE)
-      os.replace(DISCARTED_FILE, filename + '.bak')
+  return data
 
-    with open(DISCARTED_FILE, 'w', encoding='utf-8') as fout:
-      fout.seek(0)
-      fout.write(json.dumps(discarted, indent=4, ensure_ascii=False))
-      fout.truncate()
-  except Exception as ex:
-    Log(EXCEPTION, f'An exception of type {ex} ocurred. Traceback: {traceback.format_exc()}')
-    sys.exit()
-
-def Scraper(dataset, discarted, args):
+def Scraper(dataset, notreleased, discarted, args):
   '''
   Search games in Steam.
   '''
@@ -292,6 +253,7 @@ def Scraper(dataset, discarted, args):
   if apps:
     Log(INFO, f'Scanning {len(apps) - (len(dataset) + len(discarted))} apps (CTRL+C to exit)')
     gamesAdded = 0
+    gamesNotReleased = 0
     gamesDiscarted = 0
     retryTime = 4
     successRequestCount = 0
@@ -300,6 +262,9 @@ def Scraper(dataset, discarted, args):
     random.shuffle(apps)
     for appID in apps:
       if appID not in dataset and appID not in discarted:
+        if args.released and appID in notreleased:
+          continue
+
         app = SteamRequest(appID, retryTime, successRequestCount, errorRequestCount, args.retries)
         if app:
           game = ParseGame(app)
@@ -308,10 +273,21 @@ def Scraper(dataset, discarted, args):
             dataset[appID] = game
             gamesAdded += 1
 
+            if appID in notreleased:
+              notreleased.remove(appID)
+
             if args.autosave > 0 and gamesAdded > 0 and gamesAdded % args.autosave == 0:
               Log(INFO, f'Autosaving dataset (#{len(dataset)})')
-              SaveDataset(dataset, args, True)
+              SaveJSON(dataset, args.outfile, True)
           else:
+            if appID not in notreleased:
+              notreleased.append(appID)
+              gamesNotReleased += 1
+
+              if args.autosave > 0 and gamesNotReleased > 0 and gamesNotReleased % args.autosave == 0:
+                Log(INFO, f'Autosaving not released games (#{len(notreleased)})')
+                SaveJSON(notreleased, NOTRELEASED_FILE, True)
+
             Log(INFO, f"'{game['name']}' is not released yet")
         else:
           discarted.append(appID)
@@ -319,13 +295,14 @@ def Scraper(dataset, discarted, args):
 
         if args.autosave > 0 and gamesDiscarted > 0 and gamesDiscarted % args.autosave == 0:
           Log(INFO, f'Autosaving discarted (#{len(discarted)})')
-          SaveDiscarted(discarted, True)
+          SaveJSON(discarted, DISCARTED_FILE, True)
 
         time.sleep(args.sleep)
 
-    SaveDataset(dataset, args)
-    SaveDiscarted(discarted)
-    Log(INFO, f'{gamesAdded} new games added, {gamesDiscarted} discarted')
+    SaveJSON(dataset, args.outfile)
+    SaveJSON(discarted, DISCARTED_FILE)
+    SaveJSON(notreleased, NOTRELEASED_FILE)
+    Log(INFO, f'{gamesAdded} new games added, {gamesNotReleased} not released, {gamesDiscarted} discarted')
   else:
     Log(ERROR, 'Error requesting list of games')
     sys.exit()
@@ -333,24 +310,40 @@ def Scraper(dataset, discarted, args):
 if __name__ == "__main__":
   print(f'Steam Games Scraper {__version__} by {__author__}.')
   parser = argparse.ArgumentParser(description='Steam games scraper.')
-  parser.add_argument('-o', '--outfile',  type=str,   default=DEFAULT_OUTFILE,  help='Output file name')
-  parser.add_argument('-s', '--sleep',    type=float, default=DEFAULT_SLEEP,    help='Waiting time between requests')
-  parser.add_argument('-r', '--retries',  type=int,   default=DEFAULT_RETRIES,  help='Number of retries (0 to always retry)')
-  parser.add_argument('-a', '--autosave', type=int,   default=DEFAULT_AUTOSAVE, help='Record the data every number of new entries (0 to deactivate)')
-  parser.add_argument('-c', '--currency', type=str,   default=DEFAULT_CURRENCY, help='Currency code')
+  parser.add_argument('-o', '--outfile',     type=str,   default=DEFAULT_OUTFILE,  help='Output file name')
+  parser.add_argument('-s', '--sleep',       type=float, default=DEFAULT_SLEEP,    help='Waiting time between requests')
+  parser.add_argument('-r', '--retries',     type=int,   default=DEFAULT_RETRIES,  help='Number of retries (0 to always retry)')
+  parser.add_argument('-a', '--autosave',    type=int,   default=DEFAULT_AUTOSAVE, help='Record the data every number of new entries (0 to deactivate)')
+  parser.add_argument('-d', '--released',    type=bool,  default=True,             help='If it is on the list of not yet released, no information is requested')
+  parser.add_argument('-c', '--currency',    type=str,   default=DEFAULT_CURRENCY, help='Currency code')
   args = parser.parse_args()
 
   if 'h' in args or 'help' in args:
     parser.print_help()
     sys.exit()
 
-  dataset = LoadDataset(args)
+  dataset = LoadJSON(args.outfile)
+  discarted = LoadJSON(DISCARTED_FILE)
+  notreleased = LoadJSON(NOTRELEASED_FILE)
+
+  if dataset is None:
+    dataset = {}
+
+  if discarted is None:
+    discarted = []
+
+  if notreleased is None:
+    notreleased = []
+
+  Log(INFO, f'Dataset loaded with {len(dataset)} games' if len(dataset) > 0 else 'New dataset created')
+  Log(INFO, f'{len(notreleased)} games not released yet')
+  Log(INFO, f'{len(discarted)} apps discarted')
 
   try:
-    discarted = LoadDiscarted()
-    Scraper(dataset, discarted, args)
+    Scraper(dataset, notreleased, discarted, args)
   except (KeyboardInterrupt, SystemExit):
-    SaveDataset(dataset, args)
-    SaveDiscarted(discarted)
+    SaveJSON(dataset, args.outfile, args.autosave > 0)
+    SaveJSON(discarted, DISCARTED_FILE, args.autosave > 0)
+    SaveJSON(notreleased, NOTRELEASED_FILE, args.autosave > 0)
 
   Log(INFO, 'Done')

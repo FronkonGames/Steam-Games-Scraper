@@ -165,4 +165,5 @@ cython_debug/
 applist.json
 games.json
 discarted.json
+notreleased.json
 *.bak
