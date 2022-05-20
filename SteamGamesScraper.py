@@ -1,4 +1,3 @@
-
 ########################################################################################################################
 # Copyright (c) Martin Bustos @FronkonGames <fronkongames@gmail.com>
 #
@@ -36,7 +35,7 @@ DEFAULT_OUTFILE  = 'games.json'
 APPLIST_FILE     = 'applist.json'
 DISCARTED_FILE   = 'discarted.json'
 NOTRELEASED_FILE = 'notreleased.json'
-DEFAULT_SLEEP    = 3.0
+DEFAULT_SLEEP    = 4.0
 DEFAULT_RETRIES  = 4
 DEFAULT_AUTOSAVE = 100
 DEFAULT_TIMEOUT  = 5
@@ -78,7 +77,7 @@ def DoRequest(url, parameters=None, retryTime=4, successCount=0, errorCount=0, r
       errorCount += 1
       successCount = 0
       time.sleep(retryTime)
-      retryTime = min(retryTime * 2, 256)
+      retryTime = min(retryTime * 4, 256)
       return DoRequest(url, parameters, retryTime, successCount, errorCount, retries)
     else:
       print('[!] No more retries.')

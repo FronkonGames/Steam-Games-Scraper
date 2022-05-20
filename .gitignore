@@ -166,4 +166,5 @@ applist.json
 games.json
 discarted.json
 notreleased.json
+games.csv
 *.bak
