@@ -296,7 +296,7 @@ def Scraper(dataset, notreleased, discarted, args):
           Log(INFO, f'Autosaving discarted (#{len(discarted)})')
           SaveJSON(discarted, DISCARTED_FILE, True)
 
-        time.sleep(args.sleep if random() > 0.1 else args.sleep * 2.0)
+        time.sleep(args.sleep if random.random() > 0.1 else args.sleep * 2.0)
 
     SaveJSON(dataset, args.outfile)
     SaveJSON(discarted, DISCARTED_FILE)
@@ -316,7 +316,7 @@ if __name__ == "__main__":
   parser.add_argument('-d', '--released',    type=bool,  default=True,             help='If it is on the list of not yet released, no information is requested')
   parser.add_argument('-c', '--currency',    type=str,   default=DEFAULT_CURRENCY, help='Currency code')
   args = parser.parse_args()
-  random.seed(dt.datetime.now())
+  random.seed(time.time())
 
   if 'h' in args or 'help' in args:
     parser.print_help()
