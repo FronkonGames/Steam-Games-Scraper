@@ -106,13 +106,13 @@ To change the output file uses the parameter '_-o_' / '_-outfile_':
 python SteamGamesScraper.py -o output.json
 ```
 
-Steam can reject, or even banner your IP, if he considers that you are doing too many requests. That's why 4.0 seconds are waited by default. You can change this with the parameter '_-s_' / '_-sleep_':
+Steam can reject, or even banner your IP, if he considers that you are doing too many requests. That's why 5.0 seconds are waited by default. You can change this with the parameter '_-s_' / '_-sleep_':
 
 ```
 python SteamGamesScraper.py -s 2.0
 ```
 
-> **It is not recommended to set the wait time below 4.0 seconds.**
+> **It is not recommended to set the wait time below 5.0 seconds.**
 
 When Steam denies a request, by default it is trying up to four times. You can change the number of retries with '_-r_' / '_-retries_':
 

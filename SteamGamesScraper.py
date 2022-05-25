@@ -35,10 +35,10 @@ DEFAULT_OUTFILE  = 'games.json'
 APPLIST_FILE     = 'applist.json'
 DISCARTED_FILE   = 'discarted.json'
 NOTRELEASED_FILE = 'notreleased.json'
-DEFAULT_SLEEP    = 4.0
+DEFAULT_SLEEP    = 5.0
 DEFAULT_RETRIES  = 4
 DEFAULT_AUTOSAVE = 100
-DEFAULT_TIMEOUT  = 5
+DEFAULT_TIMEOUT  = 10
 DEFAULT_CURRENCY = 'us'
 LOG_ICON         = ['i', 'W', '!', '!!']
 INFO             = 0
@@ -59,7 +59,7 @@ def DoRequest(url, parameters=None, retryTime=4, successCount=0, errorCount=0, r
   except (requests.exceptions.HTTPError, requests.exceptions.ConnectionError,
           requests.exceptions.Timeout, requests.exceptions.RequestException,
           SSLError) as ex:
-    Log(EXCEPTION, f'An exception of type {type(ex).__name__} ocurred. Traceback: {traceback.format_exc()}')
+    Log(EXCEPTION, f'An exception of type {type(ex).__name__} ocurred.')
     response = None
 
   if response and response.status_code == 200:
@@ -215,6 +215,7 @@ def LoadJSON(filename):
   data = None
   try:
     if os.path.exists(filename):
+      Log(INFO, f"Loading dataset '{filename}'")
       with open(filename, 'r', encoding='utf-8') as fin:
         text = fin.read()
         if len(text) > 0:
