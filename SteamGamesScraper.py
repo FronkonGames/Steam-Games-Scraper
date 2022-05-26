@@ -49,7 +49,17 @@ EXCEPTION        = 3
 def Log(level, message):
   print(f"[{LOG_ICON[level]} {dt.datetime.now().strftime('%H:%M:%S')}] {message}.")
 
-def DoRequest(url, parameters=None, retryTime=4, successCount=0, errorCount=0, retries=0):
+def ProgressBar(title, count, total):
+  bar_len = 60
+  filled_len = int(round(bar_len * count / float(total)))
+
+  percents = round(100.0 * count / float(total), 2)
+  bar = '█' * filled_len + '░' * (bar_len - filled_len)
+
+  sys.stdout.write(f"[i {dt.datetime.now().strftime('%H:%M:%S')}] {title} {bar} {percents}% (CTRL+C to exit).\r")
+  sys.stdout.flush()
+
+def DoRequest(url, parameters=None, retryTime=5, successCount=0, errorCount=0, retries=0):
   '''
   Makes a Web request. If an error occurs, retry.
   '''
@@ -66,18 +76,18 @@ def DoRequest(url, parameters=None, retryTime=4, successCount=0, errorCount=0, r
     errorCount = 0
     successCount += 1
     if successCount > retryTime:
-      retryTime = min(4, retryTime / 2)
+      retryTime = min(5, retryTime / 2)
       successCount = 0
   else:
     if retries == 0 or errorCount < retries:
       if response is not None:
-        Log(WARNING, f'{response.reason}, retrying in {retryTime} seconds')
+        Log(WARNING, f'\r{response.reason}, retrying in {retryTime} seconds')
       else:
-        Log(WARNING, f'Request failed, retrying in {retryTime} seconds.')
+        Log(WARNING, f'\rRequest failed, retrying in {retryTime} seconds.')
       errorCount += 1
       successCount = 0
       time.sleep(retryTime)
-      retryTime = min(retryTime * 4, 256)
+      retryTime = min(retryTime * 2, 500)
       return DoRequest(url, parameters, retryTime, successCount, errorCount, retries)
     else:
       print('[!] No more retries.')
@@ -251,7 +261,6 @@ def Scraper(dataset, notreleased, discarted, args):
         fout.truncate()
 
   if apps:
-    Log(INFO, f'Scanning {len(apps) - (len(dataset) + len(discarted))} apps (CTRL+C to exit)')
     gamesAdded = 0
     gamesNotReleased = 0
     gamesDiscarted = 0
@@ -260,6 +269,10 @@ def Scraper(dataset, notreleased, discarted, args):
     errorRequestCount = 0
 
     random.shuffle(apps)
+    total = len(apps)
+    count = 0
+    title = f'Scanning {len(apps)} apps'
+
     for appID in apps:
       if appID not in dataset and appID not in discarted:
         if args.released and appID in notreleased:
@@ -269,7 +282,6 @@ def Scraper(dataset, notreleased, discarted, args):
         if app:
           game = ParseGame(app)
           if game['release_date'] != '':
-            Log(INFO, f"'{game['name']}' added (#{len(dataset)})")
             dataset[appID] = game
             gamesAdded += 1
 
@@ -277,7 +289,6 @@ def Scraper(dataset, notreleased, discarted, args):
               notreleased.remove(appID)
 
             if args.autosave > 0 and gamesAdded > 0 and gamesAdded % args.autosave == 0:
-              Log(INFO, f'Autosaving dataset (#{len(dataset)})')
               SaveJSON(dataset, args.outfile, True)
           else:
             if appID not in notreleased:
@@ -285,24 +296,26 @@ def Scraper(dataset, notreleased, discarted, args):
               gamesNotReleased += 1
 
               if args.autosave > 0 and gamesNotReleased > 0 and gamesNotReleased % args.autosave == 0:
-                Log(INFO, f'Autosaving not released games (#{len(notreleased)})')
                 SaveJSON(notreleased, NOTRELEASED_FILE, True)
 
-            Log(INFO, f"'{game['name']}' is not released yet")
+            text = f"'{game['name']}' is not released yet"
         else:
           discarted.append(appID)
           gamesDiscarted += 1
 
         if args.autosave > 0 and gamesDiscarted > 0 and gamesDiscarted % args.autosave == 0:
-          Log(INFO, f'Autosaving discarted (#{len(discarted)})')
           SaveJSON(discarted, DISCARTED_FILE, True)
 
         time.sleep(args.sleep if random.random() > 0.1 else args.sleep * 2.0)
+      count += 1
+      ProgressBar(title, count, total)
 
+    ProgressBar(title, total, total)
     SaveJSON(dataset, args.outfile)
     SaveJSON(discarted, DISCARTED_FILE)
     SaveJSON(notreleased, NOTRELEASED_FILE)
-    Log(INFO, f'{gamesAdded} new games added, {gamesNotReleased} not released, {gamesDiscarted} discarted')
+    print('\r')
+    Log(INFO, f'Scanning completed: {gamesAdded} new games added, {gamesNotReleased} not released, {gamesDiscarted} discarted')
   else:
     Log(ERROR, 'Error requesting list of games')
     sys.exit()
@@ -337,12 +350,17 @@ if __name__ == "__main__":
     notreleased = []
 
   Log(INFO, f'Dataset loaded with {len(dataset)} games' if len(dataset) > 0 else 'New dataset created')
-  Log(INFO, f'{len(notreleased)} games not released yet')
-  Log(INFO, f'{len(discarted)} apps discarted')
+
+  if len(notreleased) > 0:
+    Log(INFO, f'{len(notreleased)} games not released yet')
+
+  if len(discarted) > 0:
+    Log(INFO, f'{len(discarted)} apps discarted')
 
   try:
     Scraper(dataset, notreleased, discarted, args)
   except (KeyboardInterrupt, SystemExit):
+    print('\r')
     SaveJSON(dataset, args.outfile, args.autosave > 0)
     SaveJSON(discarted, DISCARTED_FILE, args.autosave > 0)
     SaveJSON(notreleased, NOTRELEASED_FILE, args.autosave > 0)

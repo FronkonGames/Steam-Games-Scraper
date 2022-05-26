@@ -24,14 +24,14 @@ import os
 import json
 import argparse
 
-def Progress(count, total):
+def ProgressBar(count, total):
   bar_len = 60
   filled_len = int(round(bar_len * count / float(total)))
 
   percents = round(100.0 * count / float(total), 1)
   bar = '█' * filled_len + '░' * (bar_len - filled_len)
 
-  sys.stdout.write(f'▐{bar}▌ {percents}%\r')
+  sys.stdout.write(f'{bar} {percents}%\r')
   sys.stdout.flush()
 
 def WriteString(app, key):
@@ -115,7 +115,7 @@ if os.path.exists(filename):
                 f"{WriteStringArray(app, 'categories')},{WriteStringArray(app, 'genres')},{WriteStringArray(app, 'screenshots')}," +
                 f"{WriteStringArray(app, 'movies')}\n")
       count += 1
-      Progress(count, total)
+      ProgressBar(count, total)
   
     print('\nDone.')
 else:
