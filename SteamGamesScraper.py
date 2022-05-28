@@ -50,13 +50,13 @@ def Log(level, message):
   print(f"[{LOG_ICON[level]} {dt.datetime.now().strftime('%H:%M:%S')}] {message}.")
 
 def ProgressBar(title, count, total):
-  bar_len = 60
+  bar_len = 100
   filled_len = int(round(bar_len * count / float(total)))
 
   percents = round(100.0 * count / float(total), 2)
   bar = '█' * filled_len + '░' * (bar_len - filled_len)
 
-  sys.stdout.write(f"[i {dt.datetime.now().strftime('%H:%M:%S')}] {title} {bar} {percents}% (CTRL+C to exit).\r")
+  sys.stdout.write(f"[i {dt.datetime.now().strftime('%H:%M:%S')}] {title} {bar} {percents}% (CTRL+C to exit). \r")
   sys.stdout.flush()
 
 def DoRequest(url, parameters=None, retryTime=5, successCount=0, errorCount=0, retries=0):
@@ -81,9 +81,9 @@ def DoRequest(url, parameters=None, retryTime=5, successCount=0, errorCount=0, r
   else:
     if retries == 0 or errorCount < retries:
       if response is not None:
-        Log(WARNING, f'\r{response.reason}, retrying in {retryTime} seconds')
+        Log(WARNING, f'{response.reason}, retrying in {retryTime} seconds')
       else:
-        Log(WARNING, f'\rRequest failed, retrying in {retryTime} seconds.')
+        Log(WARNING, f'Request failed, retrying in {retryTime} seconds.')
       errorCount += 1
       successCount = 0
       time.sleep(retryTime)
@@ -264,21 +264,19 @@ def Scraper(dataset, notreleased, discarted, args):
     gamesAdded = 0
     gamesNotReleased = 0
     gamesDiscarted = 0
-    retryTime = 4
     successRequestCount = 0
     errorRequestCount = 0
 
     random.shuffle(apps)
     total = len(apps)
     count = 0
-    title = f'Scanning {len(apps)} apps'
 
     for appID in apps:
       if appID not in dataset and appID not in discarted:
         if args.released and appID in notreleased:
           continue
 
-        app = SteamRequest(appID, retryTime, successRequestCount, errorRequestCount, args.retries)
+        app = SteamRequest(appID, min(4, args.sleep), successRequestCount, errorRequestCount, args.retries)
         if app:
           game = ParseGame(app)
           if game['release_date'] != '':
@@ -308,14 +306,14 @@ def Scraper(dataset, notreleased, discarted, args):
 
         time.sleep(args.sleep if random.random() > 0.1 else args.sleep * 2.0)
       count += 1
-      ProgressBar(title, count, total)
+      ProgressBar('Scanning', count, total)
 
-    ProgressBar(title, total, total)
+    ProgressBar('Scanning', total, total)
+    print('\r')
+    Log(INFO, f'Scanning completed: {gamesAdded} new games added, {gamesNotReleased} not released, {gamesDiscarted} discarted')
     SaveJSON(dataset, args.outfile)
     SaveJSON(discarted, DISCARTED_FILE)
     SaveJSON(notreleased, NOTRELEASED_FILE)
-    print('\r')
-    Log(INFO, f'Scanning completed: {gamesAdded} new games added, {gamesNotReleased} not released, {gamesDiscarted} discarted')
   else:
     Log(ERROR, 'Error requesting list of games')
     sys.exit()
@@ -360,7 +358,6 @@ if __name__ == "__main__":
   try:
     Scraper(dataset, notreleased, discarted, args)
   except (KeyboardInterrupt, SystemExit):
-    print('\r')
     SaveJSON(dataset, args.outfile, args.autosave > 0)
     SaveJSON(discarted, DISCARTED_FILE, args.autosave > 0)
     SaveJSON(notreleased, NOTRELEASED_FILE, args.autosave > 0)
