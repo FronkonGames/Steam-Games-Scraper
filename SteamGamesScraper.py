@@ -86,8 +86,8 @@ def DoRequest(url, parameters=None, retryTime=5, successCount=0, errorCount=0, r
         Log(WARNING, f'Request failed, retrying in {retryTime} seconds.')
       errorCount += 1
       successCount = 0
-      time.sleep(retryTime)
       retryTime = min(retryTime * 2, 500)
+      time.sleep(retryTime)
       return DoRequest(url, parameters, retryTime, successCount, errorCount, retries)
     else:
       print('[!] No more retries.')
@@ -106,17 +106,12 @@ def SteamRequest(appID, retryTime, successRequestCount, errorRequestCount, retri
       data = response.json()
       app = data[appID]
       if app['success'] == False:
-        Log(WARNING, f'\'{appID}\' info not available')
         return None
       elif app['data']['type'] != 'game':
-        type = app['data']['type']
-        Log(INFO, f'\'{appID}\' is not a game ({type})')
         return None
       elif app['data']['is_free'] == False and 'price_overview' in app['data'] and app['data']['price_overview']['final_formatted'] == '':
-        Log(WARNING, f'\'{appID}\' is not free but has no price')
         return None
       elif 'developers' in app['data'] and len(app['data']['developers']) == 0:
-        Log(WARNING, f'\'{appID}\' has no developers')
         return None
       else:
         return app['data']
