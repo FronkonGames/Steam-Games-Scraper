@@ -80,14 +80,16 @@ def DoRequest(url, parameters=None, retryTime=5, successCount=0, errorCount=0, r
       successCount = 0
   else:
     if retries == 0 or errorCount < retries:
+      errorCount += 1
+      successCount = 0
+      retryTime = min(retryTime * 2, 500)
       if response is not None:
         Log(WARNING, f'{response.reason}, retrying in {retryTime} seconds')
       else:
         Log(WARNING, f'Request failed, retrying in {retryTime} seconds.')
-      errorCount += 1
-      successCount = 0
-      retryTime = min(retryTime * 2, 500)
+
       time.sleep(retryTime)
+
       return DoRequest(url, parameters, retryTime, successCount, errorCount, retries)
     else:
       print('[!] No more retries.')
@@ -220,7 +222,7 @@ def LoadJSON(filename):
   data = None
   try:
     if os.path.exists(filename):
-      Log(INFO, f"Loading dataset '{filename}'")
+      Log(INFO, f"Loading '{filename}'")
       with open(filename, 'r', encoding='utf-8') as fin:
         text = fin.read()
         if len(text) > 0:
@@ -357,4 +359,4 @@ if __name__ == "__main__":
     SaveJSON(discarted, DISCARTED_FILE, args.autosave > 0)
     SaveJSON(notreleased, NOTRELEASED_FILE, args.autosave > 0)
 
-  Log(INFO, 'Done')
+  Log(INFO, 'Done\r')
