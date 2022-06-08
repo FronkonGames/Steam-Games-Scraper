@@ -78,6 +78,7 @@ if os.path.exists(filename):
       'DLC count',
       'About the game',
       'Supported languages',
+      'Full audio languages',
       'Reviews',
       'Header image',
       'Website',
@@ -107,13 +108,13 @@ if os.path.exists(filename):
       app = dataset[appID]
       fin.write(f"{appID},{WriteString(app, 'name')},{WriteString(app, 'release_date')},{WriteKey(app, 'required_age')}," +
                 f"{WriteKey(app, 'price')},{WriteKey(app, 'dlc_count')},{WriteString(app, 'about_the_game')}," +
-                f"{WriteString(app, 'supported_languages')},{WriteString(app, 'reviews')},{WriteString(app, 'header_image')}," +
-                f"{WriteString(app, 'website')},{WriteString(app, 'support_url')},{WriteString(app, 'support_email')}," + 
-                f"{WriteKey(app, 'windows')},{WriteKey(app, 'mac')},{WriteKey(app, 'linux')},{WriteKey(app, 'metacritic_score')}," +
-                f"{WriteString(app, 'metacritic_url')},{WriteKey(app, 'achievements')},{WriteKey(app, 'recommendations')}," +
-                f"{WriteString(app, 'notes')},{WriteStringArray(app, 'developers')},{WriteStringArray(app, 'publishers')}," +
-                f"{WriteStringArray(app, 'categories')},{WriteStringArray(app, 'genres')},{WriteStringArray(app, 'screenshots')}," +
-                f"{WriteStringArray(app, 'movies')}\n")
+                f"{WriteString(app, 'supported_languages')},{WriteString(app, 'full_audio_languages')}{WriteString(app, 'reviews')}," +
+                f"{WriteString(app, 'header_image')},{WriteString(app, 'website')},{WriteString(app, 'support_url')},"+ 
+                f"{WriteString(app, 'support_email')},{WriteKey(app, 'windows')},{WriteKey(app, 'mac')},{WriteKey(app, 'linux')}," + 
+                f"{WriteKey(app, 'metacritic_score')},{WriteString(app, 'metacritic_url')},{WriteKey(app, 'achievements')}," +
+                f"{WriteKey(app, 'recommendations')},{WriteString(app, 'notes')},{WriteStringArray(app, 'developers')}," +
+                f"{WriteStringArray(app, 'publishers')},{WriteStringArray(app, 'categories')},{WriteStringArray(app, 'genres')}," +
+                f"{WriteStringArray(app, 'screenshots')},{WriteStringArray(app, 'movies')}\n")
       count += 1
       ProgressBar(count, total)
   

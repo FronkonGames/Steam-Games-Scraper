@@ -59,6 +59,22 @@ def ProgressBar(title, count, total):
   sys.stdout.write(f"[i {dt.datetime.now().strftime('%H:%M:%S')}] {title} {bar} {percents}% (CTRL+C to exit). \r")
   sys.stdout.flush()
 
+def SanitizeText(text):
+  '''
+  Eliminates HTML codes, escape codes and URLs.
+  '''
+  text = re.sub(r'(https|http)?:\/\/(\w|\.|\/|\?|\=|\&|\%)*\b', '', text, flags=re.MULTILINE)
+  text = re.sub('<[^<]+?>', '', text)
+  text = text.replace('\n\r', ' ')
+  text = text.replace('\r\n', ' ')
+  text = text.replace('\r \n', ' ')
+  text = text.replace('\t', ' ')
+  text = text.replace('&quot;', "'")
+  text = re.sub(' +', ' ', text)
+  text = text.lstrip(' ')
+
+  return text
+
 def DoRequest(url, parameters=None, retryTime=5, successCount=0, errorCount=0, retries=0):
   '''
   Makes a Web request. If an error occurs, retry.
@@ -142,7 +158,6 @@ def ParseGame(app):
   game['detailed_description'] = app['detailed_description'].strip() if 'detailed_description' in app else ''
   game['about_the_game'] = app['about_the_game'].strip() if 'about_the_game' in app else ''
   game['short_description'] = app['short_description'].strip() if 'short_description' in app else ''
-  game['supported_languages'] = app['supported_languages'] if 'supported_languages' in app else ''
   game['reviews'] = app['reviews'].strip() if 'reviews' in app else ''
   game['header_image'] = app['header_image'].strip() if 'header_image' in app else ''
   game['website'] = app['website'].strip() if 'website' in app and app['website'] is not None else ''
@@ -157,6 +172,25 @@ def ParseGame(app):
   game['recommendations'] = app['recommendations']['total'] if 'recommendations' in app else 0
   game['notes'] = app['content_descriptors']['notes'] if 'content_descriptors' in app and app['content_descriptors']['notes'] is not None else ''
 
+  game['detailed_description'] = SanitizeText(game['detailed_description'])
+  game['about_the_game'] = SanitizeText(game['about_the_game'])
+  game['reviews'] = SanitizeText(game['reviews'])
+  game['notes'] = SanitizeText(game['notes'])
+
+  game['supported_languages'] = []
+  game['full_audio_languages'] = []
+
+  if 'supported_languages' in app:
+    languagesApp = app['supported_languages']
+    languagesApp = re.sub('<[^<]+?>', '', languagesApp)
+    languagesApp = languagesApp.replace('languages with full audio support', '')
+
+    languages = languagesApp.split(', ')
+    for lang in languages:
+      if '*' in lang:
+        game['full_audio_languages'].append(lang.replace('*', ''))
+      game['supported_languages'].append(lang.replace('*', ''))
+
   game['packages'] = []
   if 'package_groups' in app:
     for package in app['package_groups']:
@@ -167,7 +201,7 @@ def ParseGame(app):
                        'description': sub['option_description'],
                        'price': round(float(sub['price_in_cents_with_discount']) * 0.01, 2) })
 
-      game['packages'].append({'title': package['title'], 'description': package['description'], 'subs': subs})
+      game['packages'].append({'title': SanitizeText(package['title']), 'description': SanitizeText(package['description']), 'subs': subs})
 
   game['developers'] = []
   if 'developers' in app:
