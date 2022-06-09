@@ -40,7 +40,7 @@ DEFAULT_RETRIES  = 4
 DEFAULT_AUTOSAVE = 100
 DEFAULT_TIMEOUT  = 10
 DEFAULT_CURRENCY = 'us'
-LOG_ICON         = ['i', 'W', '!', '!!']
+LOG_ICON         = ['i', 'W', 'E', '!']
 INFO             = 0
 WARNING          = 1
 ERROR            = 2
@@ -61,15 +61,17 @@ def ProgressBar(title, count, total):
 
 def SanitizeText(text):
   '''
-  Eliminates HTML codes, escape codes and URLs.
+  Removes HTML codes, escape codes and URLs.
   '''
-  text = re.sub(r'(https|http)?:\/\/(\w|\.|\/|\?|\=|\&|\%)*\b', '', text, flags=re.MULTILINE)
-  text = re.sub('<[^<]+?>', '', text)
   text = text.replace('\n\r', ' ')
   text = text.replace('\r\n', ' ')
   text = text.replace('\r \n', ' ')
+  text = text.replace('\r', ' ')
+  text = text.replace('\n', ' ')
   text = text.replace('\t', ' ')
   text = text.replace('&quot;', "'")
+  text = re.sub(r'(https|http)?:\/\/(\w|\.|\/|\?|\=|\&|\%)*\b', '', text, flags=re.MULTILINE)
+  text = re.sub('<[^<]+?>', '', text)
   text = re.sub(' +', ' ', text)
   text = text.lstrip(' ')
 
@@ -174,6 +176,7 @@ def ParseGame(app):
 
   game['detailed_description'] = SanitizeText(game['detailed_description'])
   game['about_the_game'] = SanitizeText(game['about_the_game'])
+  game['short_description'] = SanitizeText(game['short_description'])
   game['reviews'] = SanitizeText(game['reviews'])
   game['notes'] = SanitizeText(game['notes'])
 
