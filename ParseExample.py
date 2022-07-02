@@ -18,7 +18,7 @@ for app in dataset:
   required_age = game['required_age']                 # Age required to play, 0 if it is for all audiences (int).
   price = game['price']                               # Price in USD, 0.0 if its free (float).
   dlcCount = game['dlc_count']                        # Number of DLCs, 0 if you have none (int).
-  longDesc = game['detailed_description']             # Detailed description of the game, may contain HTML tags (string).
+  longDesc = game['detailed_description']             # Detailed description of the game (string).
   shortDesc = game['short_description']               # Brief description of the game,
                                                       # does not contain HTML tags (string).
   languages = game['supported_languages']             # Comma-separated enumeration of supporting languages.
