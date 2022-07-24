@@ -16,7 +16,7 @@
 __author__ = "Martin Bustos <fronkongames@gmail.com>"
 __copyright__ = "Copyright 2022, Martin Bustos"
 __license__ = "MIT"
-__version__ = "1.0.0"
+__version__ = "1.1.0"
 __email__ = "fronkongames@gmail.com"
 
 import sys
@@ -156,7 +156,27 @@ def SteamRequest(appID, retryTime, successRequestCount, errorRequestCount, retri
     Log(ERROR, 'Bad response')
     return None
 
-def ParseGame(app):
+def SteamSpyRequest(appID, retryTime, successRequestCount, errorRequestCount, retries):
+  '''
+  Request and parse information about a Steam app using SteamSpy.
+  '''
+  url = f"https://steamspy.com/api.php?request=appdetails&appid={appID}"
+  response = DoRequest(url, None, retryTime, successRequestCount, errorRequestCount, retries)
+  if response:
+    try:
+      data = response.json()
+      if data['developer'] != "":
+        return data
+      else:
+        return None
+    except Exception as ex:
+      Log(EXCEPTION, f'An exception of type {ex} ocurred. Traceback: {traceback.format_exc()}')
+      return None
+  else:
+    Log(ERROR, 'Bad response')
+    return None
+
+def ParseSteamGame(app):
   '''
   Parse game info.
   '''
@@ -326,8 +346,35 @@ def Scraper(dataset, notreleased, discarted, args):
 
         app = SteamRequest(appID, min(4, args.sleep), successRequestCount, errorRequestCount, args.retries)
         if app:
-          game = ParseGame(app)
+          game = ParseSteamGame(app)
           if game['release_date'] != '':
+            if args.steamspy:
+              extra = SteamSpyRequest(appID, min(4, args.sleep), successRequestCount, errorRequestCount, args.retries)
+              if extra != None:
+                game['user_score'] = extra['userscore']
+                game['score_rank'] = extra['score_rank']
+                game['negative'] = extra['negative']
+                game['positive'] = extra['positive']
+                game['estimated_owners'] = extra['owners'].replace(',', '').replace('..', '-')
+                game['average_playtime_forever'] = extra['average_forever']
+                game['average_playtime_2weeks'] = extra['average_2weeks']
+                game['median_playtime_forever'] = extra['median_forever']
+                game['median_playtime_2weeks'] = extra['median_2weeks']
+                game['peak_ccu'] = extra['ccu']
+                game['tags'] = extra['tags']
+              else:
+                game['user_score'] = 0
+                game['score_rank'] = ""
+                game['negative'] = 0
+                game['positive'] = 0
+                game['estimated_owners'] = "0 - 0"
+                game['average_playtime_forever'] = 0
+                game['average_playtime_2weeks'] = 0
+                game['median_playtime_forever'] = 0
+                game['median_playtime_2weeks'] = 0
+                game['peak_ccu'] = 0
+                game['tags'] = []
+
             dataset[appID] = game
             gamesAdded += 1
 
@@ -375,6 +422,7 @@ if __name__ == "__main__":
   parser.add_argument('-a', '--autosave',    type=int,   default=DEFAULT_AUTOSAVE, help='Record the data every number of new entries (0 to deactivate)')
   parser.add_argument('-d', '--released',    type=bool,  default=True,             help='If it is on the list of not yet released, no information is requested')
   parser.add_argument('-c', '--currency',    type=str,   default=DEFAULT_CURRENCY, help='Currency code')
+  parser.add_argument('-p', '--steamspy',    type=str,   default=True,             help='Add SteamSpy info')
   args = parser.parse_args()
   random.seed(time.time())
 
