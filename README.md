@@ -106,13 +106,13 @@ To change the output file uses the parameter '_-o_' / '_-outfile_':
 python SteamGamesScraper.py -o output.json
 ```
 
-Steam can reject, or even banner your IP, if he considers that you are doing too many requests. That's why 5.0 seconds are waited by default. You can change this with the parameter '_-s_' / '_-sleep_':
+There is a general API rate limit for each unique IP adress of 200 requests in five minutes which is one request every 1.5 seconds. That's why 1.5 seconds are waited by default. You can change this with the parameter '_-s_' / '_-sleep_':
 
 ```
 python SteamGamesScraper.py -s 2.0
 ```
 
-> **It is not recommended to set the wait time below 5.0 seconds.**
+> **It is not recommended to set the wait time below 1.5 seconds.**
 
 When Steam denies a request, by default it is trying up to four times. You can change the number of retries with '_-r_' / '_-retries_':
 
@@ -121,6 +121,12 @@ python SteamGamesScraper.py -r 10
 ```
 
 > **Although it is not recommended, you can set always retry by changing the value to 0.**
+
+By default prices are requested in US dollars. You can change the currency with the parameter '_-c_' / '_--currency_' and the country or region code:
+
+```
+python SteamGamesScraper.py -c eur
+```
 
 The games that have not yet been released are added to the file '_notreleased.json_' and will not be checked again. If you want to ignore this list, you can set the parameter '_-d_' / '_-released_' to _False_, or eliminate the file.
 

@@ -35,7 +35,7 @@ DEFAULT_OUTFILE  = 'games.json'
 APPLIST_FILE     = 'applist.json'
 DISCARTED_FILE   = 'discarted.json'
 NOTRELEASED_FILE = 'notreleased.json'
-DEFAULT_SLEEP    = 5.0
+DEFAULT_SLEEP    = 1.5
 DEFAULT_RETRIES  = 4
 DEFAULT_AUTOSAVE = 100
 DEFAULT_TIMEOUT  = 10
@@ -47,10 +47,16 @@ ERROR            = 2
 EXCEPTION        = 3
 
 def Log(level, message):
+  '''
+  Format and print a log message.
+  '''
   print(f"[{LOG_ICON[level]} {dt.datetime.now().strftime('%H:%M:%S')}] {message}.")
 
 def ProgressBar(title, count, total):
-  bar_len = 100
+  '''
+  Displays and updates a progress bar.
+  '''
+  bar_len = 75
   filled_len = int(round(bar_len * count / float(total)))
 
   percents = round(100.0 * count / float(total), 2)
@@ -71,11 +77,19 @@ def SanitizeText(text):
   text = text.replace('\t', ' ')
   text = text.replace('&quot;', "'")
   text = re.sub(r'(https|http)?:\/\/(\w|\.|\/|\?|\=|\&|\%)*\b', '', text, flags=re.MULTILINE)
-  text = re.sub('<[^<]+?>', '', text)
+  text = re.sub('<[^<]+?>', ' ', text)
   text = re.sub(' +', ' ', text)
   text = text.lstrip(' ')
 
   return text
+
+def PriceToFloat(price, decimals=2):
+  '''
+  Price in text to float. Use locate?
+  '''
+  price = price.replace(',', '.')
+
+  return round(float(re.findall('([0-9]+[,.]+[0-9]+)', price)[0]), decimals)
 
 def DoRequest(url, parameters=None, retryTime=5, successCount=0, errorCount=0, retries=0):
   '''
@@ -115,7 +129,7 @@ def DoRequest(url, parameters=None, retryTime=5, successCount=0, errorCount=0, r
 
   return response
 
-def SteamRequest(appID, retryTime, successRequestCount, errorRequestCount, retries, currency='us', language='en'):
+def SteamRequest(appID, retryTime, successRequestCount, errorRequestCount, retries, currency=DEFAULT_CURRENCY, language='en'):
   '''
   Request and parse information about a Steam app.
   '''
@@ -154,7 +168,7 @@ def ParseGame(app):
   if app['is_free'] or 'price_overview' not in app:
     game['price'] = 0.0
   else:
-    game['price'] = round(float(re.findall('([0-9]+[,.]+[0-9]+)', app['price_overview']['final_formatted'])[0]), 2)
+    game['price'] = PriceToFloat(app['price_overview']['final_formatted'])
 
   game['dlc_count'] = len(app['dlc']) if 'dlc' in app else 0
   game['detailed_description'] = app['detailed_description'].strip() if 'detailed_description' in app else ''
@@ -173,12 +187,6 @@ def ParseGame(app):
   game['achievements'] = int(app['achievements']['total']) if 'achievements' in app else 0
   game['recommendations'] = app['recommendations']['total'] if 'recommendations' in app else 0
   game['notes'] = app['content_descriptors']['notes'] if 'content_descriptors' in app and app['content_descriptors']['notes'] is not None else ''
-
-  game['detailed_description'] = SanitizeText(game['detailed_description'])
-  game['about_the_game'] = SanitizeText(game['about_the_game'])
-  game['short_description'] = SanitizeText(game['short_description'])
-  game['reviews'] = SanitizeText(game['reviews'])
-  game['notes'] = SanitizeText(game['notes'])
 
   game['supported_languages'] = []
   game['full_audio_languages'] = []
@@ -200,9 +208,9 @@ def ParseGame(app):
       subs = []
       if 'subs' in package:
         for sub in package['subs']:
-          subs.append({'text': sub['option_text'],
+          subs.append({'text': SanitizeText(sub['option_text']),
                        'description': sub['option_description'],
-                       'price': round(float(sub['price_in_cents_with_discount']) * 0.01, 2) })
+                       'price': round(float(sub['price_in_cents_with_discount']) * 0.01, 2) }) 
 
       game['packages'].append({'title': SanitizeText(package['title']), 'description': SanitizeText(package['description']), 'subs': subs})
 
@@ -235,6 +243,12 @@ def ParseGame(app):
   if 'movies' in app:
     for movie in app['movies']:
       game['movies'].append(movie['mp4']['max'])
+
+  game['detailed_description'] = SanitizeText(game['detailed_description'])
+  game['about_the_game'] = SanitizeText(game['about_the_game'])
+  game['short_description'] = SanitizeText(game['short_description'])
+  game['reviews'] = SanitizeText(game['reviews'])
+  game['notes'] = SanitizeText(game['notes'])
 
   return game
 
