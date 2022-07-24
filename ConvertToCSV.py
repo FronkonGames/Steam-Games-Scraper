@@ -73,6 +73,8 @@ if os.path.exists(filename):
       'AppID',
       'Name',
       'Release date',
+      'Estimated owners',
+      'Peak CCU',
       'Required age',
       'Price',
       'DLC count',
@@ -89,13 +91,22 @@ if os.path.exists(filename):
       'Linux',
       'Metacritic score',
       'Metacritic url',
+      'User score',
+      'Positive',
+      'Negative',
+      'Score rank',
       'Achievements',
       'Recommendations',
       'Notes',
+      'Average playtime forever',
+      'Average playtime two weeks',
+      'Median playtime forever',
+      'Median playtime two weeks',
       'Developers',
       'Publishers',
       'Categories',
       'Genres',
+      'Tags',
       'Screenshots',
       'Movies'
     ]
@@ -106,15 +117,48 @@ if os.path.exists(filename):
     total = len(dataset)
     for appID in dataset:
       app = dataset[appID]
-      fin.write(f"{appID},{WriteString(app, 'name')},{WriteString(app, 'release_date')},{WriteKey(app, 'required_age')}," +
-                f"{WriteKey(app, 'price')},{WriteKey(app, 'dlc_count')},{WriteString(app, 'about_the_game')}," +
-                f"{WriteString(app, 'supported_languages')},{WriteString(app, 'full_audio_languages')}{WriteString(app, 'reviews')}," +
-                f"{WriteString(app, 'header_image')},{WriteString(app, 'website')},{WriteString(app, 'support_url')},"+ 
-                f"{WriteString(app, 'support_email')},{WriteKey(app, 'windows')},{WriteKey(app, 'mac')},{WriteKey(app, 'linux')}," + 
-                f"{WriteKey(app, 'metacritic_score')},{WriteString(app, 'metacritic_url')},{WriteKey(app, 'achievements')}," +
-                f"{WriteKey(app, 'recommendations')},{WriteString(app, 'notes')},{WriteStringArray(app, 'developers')}," +
-                f"{WriteStringArray(app, 'publishers')},{WriteStringArray(app, 'categories')},{WriteStringArray(app, 'genres')}," +
-                f"{WriteStringArray(app, 'screenshots')},{WriteStringArray(app, 'movies')}\n")
+
+      data = f"{appID},"
+      data += f"{WriteString(app, 'name')},"
+      data += f"{WriteString(app, 'release_date')},"
+      data += f"{WriteString(app, 'estimated_owners')},"
+      data += f"{WriteKey(app, 'peak_ccu')},"
+      data += f"{WriteKey(app, 'required_age')},"
+      data += f"{WriteKey(app, 'price')},"
+      data += f"{WriteKey(app, 'dlc_count')},"
+      data += f"{WriteString(app, 'about_the_game')},"
+      data += f"{WriteString(app, 'supported_languages')},"
+      data += f"{WriteString(app, 'full_audio_languages')},"
+      data += f"{WriteString(app, 'reviews')},"
+      data += f"{WriteString(app, 'header_image')},"
+      data += f"{WriteString(app, 'website')},"
+      data += f"{WriteString(app, 'support_url')},"
+      data += f"{WriteString(app, 'support_email')},"
+      data += f"{WriteKey(app, 'windows')},"
+      data += f"{WriteKey(app, 'mac')},"
+      data += f"{WriteKey(app, 'linux')},"
+      data += f"{WriteKey(app, 'metacritic_score')},"
+      data += f"{WriteString(app, 'metacritic_url')},"
+      data += f"{WriteKey(app, 'user_score')},"
+      data += f"{WriteKey(app, 'positive')},"
+      data += f"{WriteKey(app, 'negative')},"
+      data += f"{WriteString(app, 'score_rank')},"
+      data += f"{WriteKey(app, 'achievements')},"
+      data += f"{WriteKey(app, 'recommendations')},"
+      data += f"{WriteString(app, 'notes')},"
+      data += f"{WriteKey(app, 'average_playtime_forever')},"
+      data += f"{WriteKey(app, 'average_playtime_2weeks')},"
+      data += f"{WriteKey(app, 'median_playtime_forever')},"
+      data += f"{WriteKey(app, 'median_playtime_2weeks')},"
+      data += f"{WriteStringArray(app, 'developers')},"
+      data += f"{WriteStringArray(app, 'publishers')},"
+      data += f"{WriteStringArray(app, 'categories')},"
+      data += f"{WriteStringArray(app, 'genres')},"
+      data += f"{WriteStringArray(app, 'tags')},"
+      data += f"{WriteStringArray(app, 'screenshots')},"
+      data += f"{WriteStringArray(app, 'movies')}"
+
+      fin.write(data)
       count += 1
       ProgressBar(count, total)
   

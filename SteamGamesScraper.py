@@ -353,8 +353,8 @@ def Scraper(dataset, notreleased, discarted, args):
               if extra != None:
                 game['user_score'] = extra['userscore']
                 game['score_rank'] = extra['score_rank']
-                game['negative'] = extra['negative']
                 game['positive'] = extra['positive']
+                game['negative'] = extra['negative']
                 game['estimated_owners'] = extra['owners'].replace(',', '').replace('..', '-')
                 game['average_playtime_forever'] = extra['average_forever']
                 game['average_playtime_2weeks'] = extra['average_2weeks']
@@ -365,8 +365,8 @@ def Scraper(dataset, notreleased, discarted, args):
               else:
                 game['user_score'] = 0
                 game['score_rank'] = ""
-                game['negative'] = 0
                 game['positive'] = 0
+                game['negative'] = 0
                 game['estimated_owners'] = "0 - 0"
                 game['average_playtime_forever'] = 0
                 game['average_playtime_2weeks'] = 0
