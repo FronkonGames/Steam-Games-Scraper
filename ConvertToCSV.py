@@ -157,6 +157,7 @@ if os.path.exists(filename):
       data += f"{WriteStringArray(app, 'tags')},"
       data += f"{WriteStringArray(app, 'screenshots')},"
       data += f"{WriteStringArray(app, 'movies')}"
+      data += "\n"
 
       fin.write(data)
       count += 1
