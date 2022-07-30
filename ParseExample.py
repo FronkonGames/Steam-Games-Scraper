@@ -15,6 +15,8 @@ for app in dataset:
 
   name = game['name']                                 # Game name (string).
   releaseDate = game['release_date']                  # Release date (string).
+  estimatedOwners = game['estimated_owners']          # Estimated owners (string, e.g.: "0 - 20000").
+  peakCCU = game['peak_ccu']                          # Number of concurrent users, yesterday (int).
   required_age = game['required_age']                 # Age required to play, 0 if it is for all audiences (int).
   price = game['price']                               # Price in USD, 0.0 if its free (float).
   dlcCount = game['dlc_count']                        # Number of DLCs, 0 if you have none (int).
@@ -31,11 +33,19 @@ for app in dataset:
   supportWindows = game['windows']                    # Does it support Windows? (bool).
   supportMac = game['mac']                            # Does it support Mac? (bool).
   supportLinux = game['linux']                        # Does it support Linux? (bool).
-  metacritic = game['metacritic_score']               # Metacritic score, 0 if it has none (int).
+  metacriticScore = game['metacritic_score']          # Metacritic score, 0 if it has none (int).
   metacriticURL = game['metacritic_url']              # Metacritic review URL (string).
+  userScore = game['user_score']                      # Users score, 0 if it has none (int).
+  positive = game['positive']                         # Positive votes (int).
+  negative = game['negative']                         # Negative votes (int).
+  scoreRank = game['score_rank']                      # Score rank of the game based on user reviews (string).
   achievements = game['achievements']                 # Number of achievements, 0 if it has none (int).
   recommens = game['recommendations']                 # User recommendations, 0 if it has none (int).
   notes = game['notes']                               # Extra information about the game content (string).
+  averagePlaytime = game['average_playtime_forever']  # Average playtime since March 2009, in minutes (int).
+  averageplaytime2W = game['average_playtime_2weeks'] # Average playtime in the last two weeks, in minutes (int).
+  medianPlaytime = game['median_playtime_forever']    # Median playtime since March 2009, in minutes (int).
+  medianPlaytime2W = game['median_playtime_2weeks']   # Median playtime in the last two weeks, in minutes (int).
 
   packages = game['packages']                         # Available packages.
   for pack in packages:           
@@ -71,3 +81,7 @@ for app in dataset:
   movies = game['movies']                             # Game movies.
   for movie in movies:            
     movieURL = movie                                  # Game movie URL (string).
+
+  tags = game['tags']                                 # Tags.
+  for tag in tags:           
+    tagKey = tag                                      # Tag key (string, int).
