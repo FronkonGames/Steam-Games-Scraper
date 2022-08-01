@@ -166,4 +166,6 @@ applist.json
 games.json
 notreleased.json
 games.csv
+games.zip
 *.bak
+Cron.sh
