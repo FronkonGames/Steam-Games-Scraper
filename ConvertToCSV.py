@@ -16,7 +16,7 @@
 __author__ = "Martin Bustos <fronkongames@gmail.com>"
 __copyright__ = "Copyright 2022, Martin Bustos"
 __license__ = "MIT"
-__version__ = "1.0.0"
+__version__ = "1.1.0"
 __email__ = "fronkongames@gmail.com"
 
 import sys
@@ -25,7 +25,7 @@ import json
 import argparse
 
 def ProgressBar(count, total):
-  bar_len = 100
+  bar_len = 50
   filled_len = int(round(bar_len * count / float(total)))
 
   percents = round(100.0 * count / float(total), 1)
@@ -34,22 +34,23 @@ def ProgressBar(count, total):
   sys.stdout.write(f'{bar} {percents}%\r')
   sys.stdout.flush()
 
-def WriteString(app, key):
-  value = ''
-  if key in app:
+def WriteString(app, key, default = ''):
+  value = default
+  if key in app and app[key] != None and app[key] != '':
     value = str(app[key]).replace('"', '').replace('\n', ' ').replace('\r', ' ').strip()
   return f'"{value}"'
 
 def WriteStringArray(app, key):
   values = []
   for value in app[key]:
-    values.append(value.replace('"', '').replace('\n', ' ').replace('\r', ' ').strip())
+    if value != None:
+      values.append(value.replace('"', '').replace('\n', ' ').replace('\r', ' ').strip())
 
   text = ','.join(values)
   return f'"{text}"'
 
-def WriteKey(app, key):
-  return str(app[key]) if key in app else '0'
+def WriteKey(app, key, default = '0'):
+  return str(app[key]) if key in app else default
 
 print(f'Convert JSON to CSV {__version__} by {__author__}.')
 parser = argparse.ArgumentParser(description='Convert JSON to CSV.')
@@ -60,7 +61,7 @@ dataset = {}
 
 filename = args.file
 if os.path.exists(filename):
-  print(f'Loading dataset.')
+  print('Loading dataset.')
   with open(filename, 'r', encoding='utf-8') as fin:
     text = fin.read()
     if len(text) > 0:
@@ -124,7 +125,7 @@ if os.path.exists(filename):
       data += f"{WriteString(app, 'estimated_owners')},"
       data += f"{WriteKey(app, 'peak_ccu')},"
       data += f"{WriteKey(app, 'required_age')},"
-      data += f"{WriteKey(app, 'price')},"
+      data += f"{WriteKey(app, 'price', '0.0')},"
       data += f"{WriteKey(app, 'dlc_count')},"
       data += f"{WriteString(app, 'about_the_game')},"
       data += f"{WriteString(app, 'supported_languages')},"
@@ -134,9 +135,9 @@ if os.path.exists(filename):
       data += f"{WriteString(app, 'website')},"
       data += f"{WriteString(app, 'support_url')},"
       data += f"{WriteString(app, 'support_email')},"
-      data += f"{WriteKey(app, 'windows')},"
-      data += f"{WriteKey(app, 'mac')},"
-      data += f"{WriteKey(app, 'linux')},"
+      data += f"{WriteKey(app, 'windows', 'False')},"
+      data += f"{WriteKey(app, 'mac', 'False')},"
+      data += f"{WriteKey(app, 'linux', 'False')},"
       data += f"{WriteKey(app, 'metacritic_score')},"
       data += f"{WriteString(app, 'metacritic_url')},"
       data += f"{WriteKey(app, 'user_score')},"

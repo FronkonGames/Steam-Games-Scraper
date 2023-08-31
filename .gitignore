@@ -166,4 +166,5 @@ applist.json
 games.json
 notreleased.json
 games.csv
+ToOneGameIdeaADay.py
 *.bak
