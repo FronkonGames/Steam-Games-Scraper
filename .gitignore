@@ -167,4 +167,6 @@ games.json
 notreleased.json
 games.csv
 ToOneGameIdeaADay.py
+games.zip
 *.bak
+Cron.sh
