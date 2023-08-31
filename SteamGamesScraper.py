@@ -16,7 +16,7 @@
 __author__ = "Martin Bustos <fronkongames@gmail.com>"
 __copyright__ = "Copyright 2022, Martin Bustos"
 __license__ = "MIT"
-__version__ = "1.1.0"
+__version__ = "1.2.0"
 __email__ = "fronkongames@gmail.com"
 
 import sys
@@ -30,11 +30,13 @@ import traceback
 import argparse
 import random
 import datetime as dt
+import csv
 
 DEFAULT_OUTFILE  = 'games.json'
 APPLIST_FILE     = 'applist.json'
 DISCARTED_FILE   = 'discarted.json'
 NOTRELEASED_FILE = 'notreleased.json'
+UPDATECSV_FILE   = 'update.csv'
 DEFAULT_SLEEP    = 1.5
 DEFAULT_RETRIES  = 4
 DEFAULT_AUTOSAVE = 100
@@ -304,29 +306,32 @@ def LoadJSON(filename):
 
   return data
 
-def Scraper(dataset, notreleased, discarted, args):
+def Scraper(dataset, notreleased, discarted, args, appIDs = None):
   '''
   Search games in Steam.
   '''
   apps = []
-  if os.path.exists(APPLIST_FILE):
-    with open(APPLIST_FILE, 'r', encoding='utf-8') as fin:
-      text = fin.read()
-      if len(text) > 0:
-        apps = json.loads(text)
-        Log(INFO, f'List with {len(apps)} games loaded')
+  if appIDs is None:
+    if os.path.exists(APPLIST_FILE):
+      with open(APPLIST_FILE, 'r', encoding='utf-8') as fin:
+        text = fin.read()
+        if len(text) > 0:
+          apps = json.loads(text)
+          Log(INFO, f'List with {len(apps)} games loaded')
+    else:
+      Log(INFO, 'Requesting list of games from Steam')
+      response = DoRequest('http://api.steampowered.com/ISteamApps/GetAppList/v2/')
+      if response:
+        time.sleep(args.sleep)
+        data = response.json()
+        apps = data['applist']['apps']
+        apps = [str(x["appid"]) for x in apps]
+        with open(APPLIST_FILE, 'w', encoding='utf-8') as fout:
+          fout.seek(0)
+          fout.write(json.dumps(apps, indent=4, ensure_ascii=False))
+          fout.truncate()
   else:
-    Log(INFO, 'Requesting list of games from Steam')
-    response = DoRequest('http://api.steampowered.com/ISteamApps/GetAppList/v2/')
-    if response:
-      time.sleep(args.sleep)
-      data = response.json()
-      apps = data['applist']['apps']
-      apps = [str(x["appid"]) for x in apps]
-      with open(APPLIST_FILE, 'w', encoding='utf-8') as fout:
-        fout.seek(0)
-        fout.write(json.dumps(apps, indent=4, ensure_ascii=False))
-        fout.truncate()
+    apps = appIDs
 
   if apps:
     gamesAdded = 0
@@ -401,11 +406,11 @@ def Scraper(dataset, notreleased, discarted, args):
 
         time.sleep(args.sleep if random.random() > 0.1 else args.sleep * 2.0)
       count += 1
-      ProgressBar('Scanning', count, total)
+      ProgressBar('Scraping', count, total)
 
-    ProgressBar('Scanning', total, total)
+    ProgressBar('Scraping', total, total)
     print('\r')
-    Log(INFO, f'Scanning completed: {gamesAdded} new games added, {gamesNotReleased} not released, {gamesDiscarted} discarted')
+    Log(INFO, f'Scrape completed: {gamesAdded} new games added, {gamesNotReleased} not released, {gamesDiscarted} discarted')
     SaveJSON(dataset, args.outfile)
     SaveJSON(discarted, DISCARTED_FILE)
     SaveJSON(notreleased, NOTRELEASED_FILE)
@@ -413,16 +418,49 @@ def Scraper(dataset, notreleased, discarted, args):
     Log(ERROR, 'Error requesting list of games')
     sys.exit()
 
+def UpdateFromCSV(dataset, notreleased, discarted, args):
+  '''
+  Update using APPIDs from a CSV file. The first column must contain the APPID.
+  '''
+  fieldSizeLimit = sys.maxsize
+  while True:
+    try:
+      csv.field_size_limit(fieldSizeLimit)
+      break
+    except OverflowError:
+      fieldSizeLimit = int(fieldSizeLimit / 2)
+
+  if os.path.exists(args.updateFromCSV):
+    appIDs = []
+    with open(args.updateFromCSV, encoding='utf8') as csvFile:
+      reader = csv.reader(csvFile, delimiter=',', quotechar='|')
+      for row in reader:
+        if len(row) > 0 and row[0].isnumeric():
+          appID = row[0].isnumeric()
+          if appID not in dataset and appID not in discarted and appID not in notreleased:
+            appIDs.append(row[0])
+
+    if len(appIDs) > 0:
+      Log(INFO, f"New {len(appIDs)} appIDs loaded from '{args.updateFromCSV}'")
+
+      Scraper(dataset, notreleased, discarted, args, appIDs)
+    else:
+      Log(WARNING, f'No appID loaded from {args.updateFromCSV}')
+  else:
+    Log(ERROR, f'File {args.updateFromCSV} not found')
+    sys.exit()
+
 if __name__ == "__main__":
   print(f'Steam Games Scraper {__version__} by {__author__}.')
   parser = argparse.ArgumentParser(description='Steam games scraper.')
-  parser.add_argument('-o', '--outfile',     type=str,   default=DEFAULT_OUTFILE,  help='Output file name')
-  parser.add_argument('-s', '--sleep',       type=float, default=DEFAULT_SLEEP,    help='Waiting time between requests')
-  parser.add_argument('-r', '--retries',     type=int,   default=DEFAULT_RETRIES,  help='Number of retries (0 to always retry)')
-  parser.add_argument('-a', '--autosave',    type=int,   default=DEFAULT_AUTOSAVE, help='Record the data every number of new entries (0 to deactivate)')
-  parser.add_argument('-d', '--released',    type=bool,  default=True,             help='If it is on the list of not yet released, no information is requested')
-  parser.add_argument('-c', '--currency',    type=str,   default=DEFAULT_CURRENCY, help='Currency code')
-  parser.add_argument('-p', '--steamspy',    type=str,   default=True,             help='Add SteamSpy info')
+  parser.add_argument('-o', '--outfile',        type=str,   default=DEFAULT_OUTFILE,  help='Output file name')
+  parser.add_argument('-s', '--sleep',          type=float, default=DEFAULT_SLEEP,    help='Waiting time between requests')
+  parser.add_argument('-r', '--retries',        type=int,   default=DEFAULT_RETRIES,  help='Number of retries (0 to always retry)')
+  parser.add_argument('-a', '--autosave',       type=int,   default=DEFAULT_AUTOSAVE, help='Record the data every number of new entries (0 to deactivate)')
+  parser.add_argument('-d', '--released',       type=bool,  default=True,             help='If it is on the list of not yet released, no information is requested')
+  parser.add_argument('-c', '--currency',       type=str,   default=DEFAULT_CURRENCY, help='Currency code')
+  parser.add_argument('-p', '--steamspy',       type=str,   default=True,             help='Add SteamSpy info')
+  parser.add_argument('-u', '--updateFromCSV',  type=str,   default=UPDATECSV_FILE,   help='Update using APPIDs from a CSV file')
   args = parser.parse_args()
   random.seed(time.time())
 
@@ -452,10 +490,13 @@ if __name__ == "__main__":
     Log(INFO, f'{len(discarted)} apps discarted')
 
   try:
-    Scraper(dataset, notreleased, discarted, args)
+    if args.updateFromCSV is None:
+      Scraper(dataset, notreleased, discarted, args)
+    else:
+      UpdateFromCSV(dataset, notreleased, discarted, args)
   except (KeyboardInterrupt, SystemExit):
     SaveJSON(dataset, args.outfile, args.autosave > 0)
     SaveJSON(discarted, DISCARTED_FILE, args.autosave > 0)
     SaveJSON(notreleased, NOTRELEASED_FILE, args.autosave > 0)
 
-  Log(INFO, 'Done\r')
+  Log(INFO, 'Done')
