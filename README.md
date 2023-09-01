@@ -160,6 +160,13 @@ python SteamGamesScraper.py -a 100
 
 > A backup file will also be generated with the previous data.
 
+Do you want to add new games from a file? You can use the parameter '_-u_' / '_-updateFromCSV_' and the CSV file name to add new games. The AppID must be in the first column.
+
+```
+python SteamGamesScraper.py -u update.csv
+```
+
+
 ## Contributors ✨
 
 [![](https://github.com/DanielSchimit.png?size=75)](https://github.com/DanielSchimit)
