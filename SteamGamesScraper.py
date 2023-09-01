@@ -431,7 +431,7 @@ def UpdateFromCSV(dataset, notreleased, discarted, args):
       fieldSizeLimit = int(fieldSizeLimit / 2)
 
   if os.path.exists(args.update):
-    Log(INFO, f"Loading '{args.updateFromCSV}'")
+    Log(INFO, f"Loading '{args.update}'")
     appIDs = []
     with open(args.update, encoding='utf8') as csvFile:
       reader = csv.reader(csvFile, delimiter=',', quotechar='|')
