@@ -451,16 +451,16 @@ def UpdateFromCSV(dataset, notreleased, discarted, args):
     Log(ERROR, f'File {args.updateFromCSV} not found')
 
 if __name__ == "__main__":
-  Log(INFO, f'Steam Games Scraper {__version__} by {__author__}.')
+  Log(INFO, f'Steam Games Scraper {__version__} by {__author__}')
   parser = argparse.ArgumentParser(description='Steam games scraper.')
-  parser.add_argument('-o', '--outfile',        type=str,   default=DEFAULT_OUTFILE,  help='Output file name')
-  parser.add_argument('-s', '--sleep',          type=float, default=DEFAULT_SLEEP,    help='Waiting time between requests')
-  parser.add_argument('-r', '--retries',        type=int,   default=DEFAULT_RETRIES,  help='Number of retries (0 to always retry)')
-  parser.add_argument('-a', '--autosave',       type=int,   default=DEFAULT_AUTOSAVE, help='Record the data every number of new entries (0 to deactivate)')
-  parser.add_argument('-d', '--released',       type=bool,  default=True,             help='If it is on the list of not yet released, no information is requested')
-  parser.add_argument('-c', '--currency',       type=str,   default=DEFAULT_CURRENCY, help='Currency code')
-  parser.add_argument('-p', '--steamspy',       type=str,   default=True,             help='Add SteamSpy info')
-  parser.add_argument('-u', '--updateFromCSV',  type=str,   default=UPDATECSV_FILE,   help='Update using APPIDs from a CSV file')
+  parser.add_argument('-o', '--outfile',  type=str,   default=DEFAULT_OUTFILE,  help='Output file name')
+  parser.add_argument('-s', '--sleep',    type=float, default=DEFAULT_SLEEP,    help='Waiting time between requests')
+  parser.add_argument('-r', '--retries',  type=int,   default=DEFAULT_RETRIES,  help='Number of retries (0 to always retry)')
+  parser.add_argument('-a', '--autosave', type=int,   default=DEFAULT_AUTOSAVE, help='Record the data every number of new entries (0 to deactivate)')
+  parser.add_argument('-d', '--released', type=bool,  default=True,             help='If it is on the list of not yet released, no information is requested')
+  parser.add_argument('-c', '--currency', type=str,   default=DEFAULT_CURRENCY, help='Currency code')
+  parser.add_argument('-p', '--steamspy', type=str,   default=True,             help='Add SteamSpy info')
+  parser.add_argument('-u', '--update',   type=str,   default=UPDATECSV_FILE,   help='Update using APPIDs from a CSV file')
   args = parser.parse_args()
   random.seed(time.time())
 
@@ -490,7 +490,7 @@ if __name__ == "__main__":
     Log(INFO, f'{len(discarted)} apps discarted')
 
   try:
-    if args.updateFromCSV is None:
+    if args.update is None:
       Scraper(dataset, notreleased, discarted, args)
     else:
       UpdateFromCSV(dataset, notreleased, discarted, args)
