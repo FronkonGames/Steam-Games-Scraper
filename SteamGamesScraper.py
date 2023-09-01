@@ -431,12 +431,13 @@ def UpdateFromCSV(dataset, notreleased, discarted, args):
       fieldSizeLimit = int(fieldSizeLimit / 2)
 
   if os.path.exists(args.updateFromCSV):
+    Log(INFO, f"Loading '{args.updateFromCSV}'")
     appIDs = []
     with open(args.updateFromCSV, encoding='utf8') as csvFile:
       reader = csv.reader(csvFile, delimiter=',', quotechar='|')
       for row in reader:
         if len(row) > 0 and row[0].isnumeric():
-          appID = row[0].isnumeric()
+          appID = row[0]
           if appID not in dataset and appID not in discarted and appID not in notreleased:
             appIDs.append(row[0])
 
@@ -448,10 +449,9 @@ def UpdateFromCSV(dataset, notreleased, discarted, args):
       Log(WARNING, f'No appID loaded from {args.updateFromCSV}')
   else:
     Log(ERROR, f'File {args.updateFromCSV} not found')
-    sys.exit()
 
 if __name__ == "__main__":
-  print(f'Steam Games Scraper {__version__} by {__author__}.')
+  Log(INFO, f'Steam Games Scraper {__version__} by {__author__}.')
   parser = argparse.ArgumentParser(description='Steam games scraper.')
   parser.add_argument('-o', '--outfile',        type=str,   default=DEFAULT_OUTFILE,  help='Output file name')
   parser.add_argument('-s', '--sleep',          type=float, default=DEFAULT_SLEEP,    help='Waiting time between requests')
