@@ -430,10 +430,10 @@ def UpdateFromCSV(dataset, notreleased, discarted, args):
     except OverflowError:
       fieldSizeLimit = int(fieldSizeLimit / 2)
 
-  if os.path.exists(args.updateFromCSV):
+  if os.path.exists(args.update):
     Log(INFO, f"Loading '{args.updateFromCSV}'")
     appIDs = []
-    with open(args.updateFromCSV, encoding='utf8') as csvFile:
+    with open(args.update, encoding='utf8') as csvFile:
       reader = csv.reader(csvFile, delimiter=',', quotechar='|')
       for row in reader:
         if len(row) > 0 and row[0].isnumeric():
@@ -442,13 +442,13 @@ def UpdateFromCSV(dataset, notreleased, discarted, args):
             appIDs.append(row[0])
 
     if len(appIDs) > 0:
-      Log(INFO, f"New {len(appIDs)} appIDs loaded from '{args.updateFromCSV}'")
+      Log(INFO, f"New {len(appIDs)} appIDs loaded from '{args.update}'")
 
       Scraper(dataset, notreleased, discarted, args, appIDs)
     else:
-      Log(WARNING, f'No appID loaded from {args.updateFromCSV}')
+      Log(WARNING, f'No appID loaded from {args.update}')
   else:
-    Log(ERROR, f'File {args.updateFromCSV} not found')
+    Log(ERROR, f'File {args.update} not found')
 
 if __name__ == "__main__":
   Log(INFO, f'Steam Games Scraper {__version__} by {__author__}')
