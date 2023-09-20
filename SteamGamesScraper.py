@@ -16,7 +16,7 @@
 __author__ = "Martin Bustos <fronkongames@gmail.com>"
 __copyright__ = "Copyright 2022, Martin Bustos"
 __license__ = "MIT"
-__version__ = "1.2.0"
+__version__ = "1.2.1"
 __email__ = "fronkongames@gmail.com"
 
 import sys
@@ -36,7 +36,6 @@ DEFAULT_OUTFILE  = 'games.json'
 APPLIST_FILE     = 'applist.json'
 DISCARTED_FILE   = 'discarted.json'
 NOTRELEASED_FILE = 'notreleased.json'
-UPDATECSV_FILE   = 'update.csv'
 DEFAULT_SLEEP    = 1.5
 DEFAULT_RETRIES  = 4
 DEFAULT_AUTOSAVE = 100
@@ -460,7 +459,7 @@ if __name__ == "__main__":
   parser.add_argument('-d', '--released', type=bool,  default=True,             help='If it is on the list of not yet released, no information is requested')
   parser.add_argument('-c', '--currency', type=str,   default=DEFAULT_CURRENCY, help='Currency code')
   parser.add_argument('-p', '--steamspy', type=str,   default=True,             help='Add SteamSpy info')
-  parser.add_argument('-u', '--update',   type=str,   default=UPDATECSV_FILE,   help='Update using APPIDs from a CSV file')
+  parser.add_argument('-u', '--update',   type=str,   default=None,             help='Update using APPIDs from a CSV file')
   args = parser.parse_args()
   random.seed(time.time())
 
