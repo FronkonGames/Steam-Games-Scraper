@@ -32,6 +32,7 @@ import random
 import datetime as dt
 import csv
 
+DEFAULT_INFILE   = 'games.json'
 DEFAULT_OUTFILE  = 'games.json'
 APPLIST_FILE     = 'applist.json'
 DISCARTED_FILE   = 'discarted.json'
@@ -453,6 +454,7 @@ def UpdateFromCSV(dataset, notreleased, discarted, args):
 if __name__ == "__main__":
   Log(INFO, f'Steam Games Scraper {__version__} by {__author__}')
   parser = argparse.ArgumentParser(description='Steam games scraper.')
+  parser.add_argument('-i', '--infile',   type=str,   default=DEFAULT_INFILE,  help='Input file name')
   parser.add_argument('-o', '--outfile',  type=str,   default=DEFAULT_OUTFILE,  help='Output file name')
   parser.add_argument('-s', '--sleep',    type=float, default=DEFAULT_SLEEP,    help='Waiting time between requests')
   parser.add_argument('-r', '--retries',  type=int,   default=DEFAULT_RETRIES,  help='Number of retries (0 to always retry)')
@@ -469,7 +471,7 @@ if __name__ == "__main__":
     parser.print_help()
     sys.exit()
 
-  dataset = LoadJSON(args.outfile)
+  dataset = LoadJSON(args.infile)
   discarted = LoadJSON(DISCARTED_FILE)
   notreleased = LoadJSON(NOTRELEASED_FILE)
 

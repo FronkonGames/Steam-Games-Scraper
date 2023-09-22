@@ -114,6 +114,12 @@ In the file '_ParseExample.py_' you can see a simple example of how to parse the
 
 # ⚙️ Parameters
 
+To change the input file uses the parameter '_-i_' / '_-infile_':
+
+```
+python SteamGamesScraper.py -i games.json
+```
+
 To change the output file uses the parameter '_-o_' / '_-outfile_':
 
 ```
