@@ -150,6 +150,12 @@ By default prices are requested in US dollars. You can change the currency with 
 python SteamGamesScraper.py -c es
 ```
 
+By default the language is set to English. You can change the language wit the parameter '_-l_' / '_--language_' and the country or region code:
+
+```
+python SteamGamesScraper.py -l en
+```
+
 The games that have not yet been released are added to the file '_notreleased.json_' and will not be checked again. If you want to ignore this list, you can set the parameter '_-d_' / '_-released_' to _False_, or eliminate the file.
 
 At the end of the scan, or by pressing _Ctrl + C_, all data are recorded. You can activate the _auto-save_ to activate each X new entries with '_-a_' / '_-autosave_':
