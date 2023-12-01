@@ -459,7 +459,7 @@ if __name__ == "__main__":
   parser.add_argument('-d', '--released', type=bool,  default=True,             help='If it is on the list of not yet released, no information is requested')
   parser.add_argument('-c', '--currency', type=str,   default=DEFAULT_CURRENCY, help='Currency code')
   parser.add_argument('-p', '--steamspy', type=str,   default=True,             help='Add SteamSpy info')
-  parser.add_argument('-u', '--update',   type=str,   default=None,             help='Update using APPIDs from a CSV file')
+  parser.add_argument('-u', '--update',   type=str,   default='',               help='Update using APPIDs from a CSV file')
   args = parser.parse_args()
   random.seed(time.time())
 
@@ -489,7 +489,7 @@ if __name__ == "__main__":
     Log(INFO, f'{len(discarted)} apps discarted')
 
   try:
-    if args.update is None:
+    if args.update is '':
       Scraper(dataset, notreleased, discarted, args)
     else:
       UpdateFromCSV(dataset, notreleased, discarted, args)
