@@ -16,7 +16,7 @@
 __author__ = "Martin Bustos <fronkongames@gmail.com>"
 __copyright__ = "Copyright 2022, Martin Bustos"
 __license__ = "MIT"
-__version__ = "1.2.1"
+__version__ = "1.2.2"
 __email__ = "fronkongames@gmail.com"
 
 import sys
@@ -489,7 +489,7 @@ if __name__ == "__main__":
     Log(INFO, f'{len(discarted)} apps discarted')
 
   try:
-    if args.update is '':
+    if args.update == '':
       Scraper(dataset, notreleased, discarted, args)
     else:
       UpdateFromCSV(dataset, notreleased, discarted, args)
