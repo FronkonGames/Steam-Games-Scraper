@@ -32,6 +32,7 @@ import random
 import datetime as dt
 import csv
 
+DEFAULT_INFILE   = 'games.json'
 DEFAULT_OUTFILE  = 'games.json'
 APPLIST_FILE     = 'applist.json'
 DISCARTED_FILE   = 'discarted.json'
@@ -41,6 +42,7 @@ DEFAULT_RETRIES  = 4
 DEFAULT_AUTOSAVE = 100
 DEFAULT_TIMEOUT  = 10
 DEFAULT_CURRENCY = 'us'
+DEFAULT_LANGUAGE = 'en'
 LOG_ICON         = ['i', 'W', 'E', '!']
 INFO             = 0
 WARNING          = 1
@@ -130,7 +132,7 @@ def DoRequest(url, parameters=None, retryTime=5, successCount=0, errorCount=0, r
 
   return response
 
-def SteamRequest(appID, retryTime, successRequestCount, errorRequestCount, retries, currency=DEFAULT_CURRENCY, language='en'):
+def SteamRequest(appID, retryTime, successRequestCount, errorRequestCount, retries, currency=DEFAULT_CURRENCY, language=DEFAULT_LANGUAGE):
   '''
   Request and parse information about a Steam app.
   '''
@@ -452,12 +454,14 @@ def UpdateFromCSV(dataset, notreleased, discarted, args):
 if __name__ == "__main__":
   Log(INFO, f'Steam Games Scraper {__version__} by {__author__}')
   parser = argparse.ArgumentParser(description='Steam games scraper.')
+  parser.add_argument('-i', '--infile',   type=str,   default=DEFAULT_INFILE,  help='Input file name')
   parser.add_argument('-o', '--outfile',  type=str,   default=DEFAULT_OUTFILE,  help='Output file name')
   parser.add_argument('-s', '--sleep',    type=float, default=DEFAULT_SLEEP,    help='Waiting time between requests')
   parser.add_argument('-r', '--retries',  type=int,   default=DEFAULT_RETRIES,  help='Number of retries (0 to always retry)')
   parser.add_argument('-a', '--autosave', type=int,   default=DEFAULT_AUTOSAVE, help='Record the data every number of new entries (0 to deactivate)')
   parser.add_argument('-d', '--released', type=bool,  default=True,             help='If it is on the list of not yet released, no information is requested')
   parser.add_argument('-c', '--currency', type=str,   default=DEFAULT_CURRENCY, help='Currency code')
+  parser.add_argument('-l', '--language', type=str,   default=DEFAULT_LANGUAGE, help='Language code')
   parser.add_argument('-p', '--steamspy', type=str,   default=True,             help='Add SteamSpy info')
   parser.add_argument('-u', '--update',   type=str,   default='',               help='Update using APPIDs from a CSV file')
   args = parser.parse_args()
@@ -467,7 +471,7 @@ if __name__ == "__main__":
     parser.print_help()
     sys.exit()
 
-  dataset = LoadJSON(args.outfile)
+  dataset = LoadJSON(args.infile)
   discarted = LoadJSON(DISCARTED_FILE)
   notreleased = LoadJSON(NOTRELEASED_FILE)
 

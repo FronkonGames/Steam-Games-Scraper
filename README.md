@@ -114,6 +114,12 @@ In the file '_ParseExample.py_' you can see a simple example of how to parse the
 
 # ⚙️ Parameters
 
+To change the input file uses the parameter '_-i_' / '_-infile_':
+
+```
+python SteamGamesScraper.py -i games.json
+```
+
 To change the output file uses the parameter '_-o_' / '_-outfile_':
 
 ```
@@ -148,6 +154,12 @@ By default prices are requested in US dollars. You can change the currency with 
 
 ```
 python SteamGamesScraper.py -c es
+```
+
+By default the language is set to English. You can change the language wit the parameter '_-l_' / '_--language_' and the country or region code:
+
+```
+python SteamGamesScraper.py -l en
 ```
 
 The games that have not yet been released are added to the file '_notreleased.json_' and will not be checked again. If you want to ignore this list, you can set the parameter '_-d_' / '_-released_' to _False_, or eliminate the file.
