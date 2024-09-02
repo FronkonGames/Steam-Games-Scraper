@@ -182,6 +182,7 @@ python SteamGamesScraper.py -u update.csv
 ## Contributors ✨
 
 [![](https://github.com/DanielSchimit.png?size=75)](https://github.com/DanielSchimit)
+[![](https://github.com/xArkqngel.png?size=75)](https://github.com/xArkqngel)
 
 ## License 📜
 

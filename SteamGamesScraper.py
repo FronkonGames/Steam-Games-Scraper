@@ -366,6 +366,7 @@ def Scraper(dataset, notreleased, discarted, args, appIDs = None):
                 game['average_playtime_2weeks'] = extra['average_2weeks']
                 game['median_playtime_forever'] = extra['median_forever']
                 game['median_playtime_2weeks'] = extra['median_2weeks']
+                game['discount'] = extra['discount']
                 game['peak_ccu'] = extra['ccu']
                 game['tags'] = extra['tags']
               else:
@@ -378,6 +379,7 @@ def Scraper(dataset, notreleased, discarted, args, appIDs = None):
                 game['average_playtime_2weeks'] = 0
                 game['median_playtime_forever'] = 0
                 game['median_playtime_2weeks'] = 0
+                game['discount'] = 0
                 game['peak_ccu'] = 0
                 game['tags'] = []
 
