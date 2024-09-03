@@ -19,6 +19,7 @@ for app in dataset:
   peakCCU = game['peak_ccu']                          # Number of concurrent users, yesterday (int).
   required_age = game['required_age']                 # Age required to play, 0 if it is for all audiences (int).
   price = game['price']                               # Price in USD, 0.0 if its free (float).
+  discount = game['discount']                         # Discount in percentage, 0 if it has none (int).
   dlcCount = game['dlc_count']                        # Number of DLCs, 0 if you have none (int).
   longDesc = game['detailed_description']             # Detailed description of the game (string).
   shortDesc = game['short_description']               # Brief description of the game,

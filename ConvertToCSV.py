@@ -78,6 +78,7 @@ if os.path.exists(filename):
       'Peak CCU',
       'Required age',
       'Price',
+      'Discount'
       'DLC count',
       'About the game',
       'Supported languages',
@@ -126,6 +127,7 @@ if os.path.exists(filename):
       data += f"{WriteKey(app, 'peak_ccu')},"
       data += f"{WriteKey(app, 'required_age')},"
       data += f"{WriteKey(app, 'price', '0.0')},"
+      data += f"{WriteKey(app, 'discount')},"
       data += f"{WriteKey(app, 'dlc_count')},"
       data += f"{WriteString(app, 'about_the_game')},"
       data += f"{WriteString(app, 'supported_languages')},"
