@@ -16,7 +16,7 @@
 __author__ = "Martin Bustos <fronkongames@gmail.com>"
 __copyright__ = "Copyright 2022, Martin Bustos"
 __license__ = "MIT"
-__version__ = "1.2.2"
+__version__ = "1.2.3"
 __email__ = "fronkongames@gmail.com"
 
 import sys
@@ -198,7 +198,7 @@ def ParseSteamGame(app):
   game['about_the_game'] = app['about_the_game'].strip() if 'about_the_game' in app else ''
   game['short_description'] = app['short_description'].strip() if 'short_description' in app else ''
   game['reviews'] = app['reviews'].strip() if 'reviews' in app else ''
-  game['header_image'] = app['header_image'].strip() if 'header_image' in app else ''
+  game['header_image'] = app['header_image'].strip() if 'header_image' in app and app['header_image'] else ''
   game['website'] = app['website'].strip() if 'website' in app and app['website'] is not None else ''
   game['support_url'] = app['support_info']['url'].strip() if 'support_info' in app else ''
   game['support_email'] = app['support_info']['email'].strip() if 'support_info' in app else ''
@@ -265,7 +265,8 @@ def ParseSteamGame(app):
   game['movies'] = []
   if 'movies' in app:
     for movie in app['movies']:
-      game['movies'].append(movie['mp4']['max'])
+      if 'mp4' in movie:
+        game['movies'].append(movie['mp4']['max'])
 
   game['detailed_description'] = SanitizeText(game['detailed_description'])
   game['about_the_game'] = SanitizeText(game['about_the_game'])
