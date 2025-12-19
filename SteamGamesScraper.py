@@ -16,7 +16,7 @@
 __author__ = "Martin Bustos <fronkongames@gmail.com>"
 __copyright__ = "Copyright 2022, Martin Bustos"
 __license__ = "MIT"
-__version__ = "1.2.3"
+__version__ = "1.3.0"
 __email__ = "fronkongames@gmail.com"
 
 import sys
@@ -31,6 +31,9 @@ import argparse
 import random
 import datetime as dt
 import csv
+
+# Initialize a global session for connection pooling
+session = requests.Session()
 
 DEFAULT_INFILE   = 'games.json'
 DEFAULT_OUTFILE  = 'games.json'
@@ -53,7 +56,7 @@ def Log(level, message):
   '''
   Format and print a log message.
   '''
-  print(f"[{LOG_ICON[level]} {dt.datetime.now().strftime('%H:%M:%S')}] {message}.")
+  print(f"[{LOG_ICON[level]} {dt.datetime.now().strftime('%H:%M:%S')}] {message}")
 
 def ProgressBar(title, count, total):
   '''
@@ -100,7 +103,7 @@ def DoRequest(url, parameters=None, retryTime=5, successCount=0, errorCount=0, r
   '''
   response = None
   try:
-    response = requests.get(url=url, params=parameters, timeout=DEFAULT_TIMEOUT)
+    response = session.get(url=url, params=parameters, timeout=DEFAULT_TIMEOUT)
   except (requests.exceptions.HTTPError, requests.exceptions.ConnectionError,
           requests.exceptions.Timeout, requests.exceptions.RequestException,
           SSLError) as ex:
@@ -111,15 +114,21 @@ def DoRequest(url, parameters=None, retryTime=5, successCount=0, errorCount=0, r
     errorCount = 0
     successCount += 1
     if successCount > retryTime:
-      retryTime = min(5, retryTime / 2)
+      retryTime = max(1.5, retryTime / 2)
       successCount = 0
+  elif response and response.status_code == 429:
+    # Too Many Requests - back off significantly
+    retryTime = 60 
+    Log(WARNING, f'Rate limit exceeded (429). Waiting {retryTime} seconds...')
+    time.sleep(retryTime)
+    return DoRequest(url, parameters, retryTime, successCount, errorCount, retries)
   else:
     if retries == 0 or errorCount < retries:
       errorCount += 1
       successCount = 0
       retryTime = min(retryTime * 2, 500)
       if response is not None:
-        Log(WARNING, f'{response.reason}, retrying in {retryTime} seconds')
+        Log(WARNING, f'HTTP {response.status_code} {response.reason}, retrying in {retryTime} seconds')
       else:
         Log(WARNING, f'Request failed, retrying in {retryTime} seconds.')
 
@@ -127,7 +136,7 @@ def DoRequest(url, parameters=None, retryTime=5, successCount=0, errorCount=0, r
 
       return DoRequest(url, parameters, retryTime, successCount, errorCount, retries)
     else:
-      print('[!] No more retries.')
+      Log(ERROR, 'No more retries available. Saving and exiting.')
       sys.exit()
 
   return response
@@ -308,30 +317,60 @@ def LoadJSON(filename):
 
   return data
 
-def Scraper(dataset, notreleased, discarted, args, appIDs = None):
+def Scraper(dataset, notreleased, discarted, args, steam_api_key, appIDs = None):
   '''
   Search games in Steam.
   '''
   apps = []
   if appIDs is None:
+    # Load existing applist if it exists
     if os.path.exists(APPLIST_FILE):
       with open(APPLIST_FILE, 'r', encoding='utf-8') as fin:
         text = fin.read()
         if len(text) > 0:
           apps = json.loads(text)
-          Log(INFO, f'List with {len(apps)} games loaded')
-    else:
-      Log(INFO, 'Requesting list of games from Steam')
-      response = DoRequest('http://api.steampowered.com/ISteamApps/GetAppList/v2/')
-      if response:
-        time.sleep(args.sleep)
-        data = response.json()
-        apps = data['applist']['apps']
-        apps = [str(x["appid"]) for x in apps]
+          Log(INFO, f'List with {len(apps)} games loaded from {APPLIST_FILE}')
+
+    # Update from Steam if not explicitly disabled
+    if args.only_applist == False:
+      Log(INFO, 'Updating list of games from Steam')
+      steam_apps = []
+      last_appid = 0
+      while True:
+        parameters = {
+          'key': steam_api_key,
+          'max_results': 50000,
+          'last_appid': last_appid
+        }
+        response = DoRequest('https://api.steampowered.com/IStoreService/GetAppList/v1/', parameters)
+        if response:
+          data = response.json()
+          if 'response' in data and 'apps' in data['response']:
+            batch = [str(x["appid"]) for x in data['response']['apps']]
+            steam_apps.extend(batch)
+            if data['response'].get('have_more_results'):
+              last_appid = data['response'].get('last_appid')
+              Log(INFO, f'Retrieved {len(steam_apps)} apps from Steam...')
+              time.sleep(args.sleep)
+            else:
+              break
+          else:
+            Log(ERROR, 'Unexpected response format from Steam API')
+            break
+        else:
+          break
+
+      if steam_apps:
+        # Merge and remove duplicates
+        apps = list(set(apps + steam_apps))
+        Log(INFO, f'List updated: {len(apps)} total games')
         with open(APPLIST_FILE, 'w', encoding='utf-8') as fout:
           fout.seek(0)
           fout.write(json.dumps(apps, indent=4, ensure_ascii=False))
           fout.truncate()
+    elif not apps:
+      Log(ERROR, f'{APPLIST_FILE} not found and --only-applist is enabled')
+      sys.exit()
   else:
     apps = appIDs
 
@@ -346,83 +385,86 @@ def Scraper(dataset, notreleased, discarted, args, appIDs = None):
     total = len(apps)
     count = 0
 
-    for appID in apps:
-      if appID not in dataset and appID not in discarted:
-        if args.released and appID in notreleased:
-          continue
+    try:
+      for appID in apps:
+        if appID not in dataset and appID not in discarted:
+          if args.released and appID in notreleased:
+            continue
 
-        app = SteamRequest(appID, min(4, args.sleep), successRequestCount, errorRequestCount, args.retries)
-        if app:
-          game = ParseSteamGame(app)
-          if game['release_date'] != '':
-            if args.steamspy:
-              extra = SteamSpyRequest(appID, min(4, args.sleep), successRequestCount, errorRequestCount, args.retries)
-              if extra != None:
-                game['user_score'] = extra['userscore']
-                game['score_rank'] = extra['score_rank']
-                game['positive'] = extra['positive']
-                game['negative'] = extra['negative']
-                game['estimated_owners'] = extra['owners'].replace(',', '').replace('..', '-')
-                game['average_playtime_forever'] = extra['average_forever']
-                game['average_playtime_2weeks'] = extra['average_2weeks']
-                game['median_playtime_forever'] = extra['median_forever']
-                game['median_playtime_2weeks'] = extra['median_2weeks']
-                game['discount'] = extra['discount']
-                game['peak_ccu'] = extra['ccu']
-                game['tags'] = extra['tags']
-              else:
-                game['user_score'] = 0
-                game['score_rank'] = ""
-                game['positive'] = 0
-                game['negative'] = 0
-                game['estimated_owners'] = "0 - 0"
-                game['average_playtime_forever'] = 0
-                game['average_playtime_2weeks'] = 0
-                game['median_playtime_forever'] = 0
-                game['median_playtime_2weeks'] = 0
-                game['discount'] = 0
-                game['peak_ccu'] = 0
-                game['tags'] = []
+          app = SteamRequest(appID, min(4, args.sleep), successRequestCount, errorRequestCount, args.retries)
+          if app:
+            game = ParseSteamGame(app)
+            if game['release_date'] != '':
+              if args.steamspy:
+                extra = SteamSpyRequest(appID, min(4, args.sleep), successRequestCount, errorRequestCount, args.retries)
+                if extra != None:
+                  game['user_score'] = extra['userscore']
+                  game['score_rank'] = extra['score_rank']
+                  game['positive'] = extra['positive']
+                  game['negative'] = extra['negative']
+                  game['estimated_owners'] = extra['owners'].replace(',', '').replace('..', '-')
+                  game['average_playtime_forever'] = extra['average_forever']
+                  game['average_playtime_2weeks'] = extra['average_2weeks']
+                  game['median_playtime_forever'] = extra['median_forever']
+                  game['median_playtime_2weeks'] = extra['median_2weeks']
+                  game['discount'] = extra['discount']
+                  game['peak_ccu'] = extra['ccu']
+                  game['tags'] = extra['tags']
+                else:
+                  game['user_score'] = 0
+                  game['score_rank'] = ""
+                  game['positive'] = 0
+                  game['negative'] = 0
+                  game['estimated_owners'] = "0 - 0"
+                  game['average_playtime_forever'] = 0
+                  game['average_playtime_2weeks'] = 0
+                  game['median_playtime_forever'] = 0
+                  game['median_playtime_2weeks'] = 0
+                  game['discount'] = 0
+                  game['peak_ccu'] = 0
+                  game['tags'] = []
 
-            dataset[appID] = game
-            gamesAdded += 1
+              dataset[appID] = game
+              gamesAdded += 1
 
-            if appID in notreleased:
-              notreleased.remove(appID)
+              if appID in notreleased:
+                notreleased.remove(appID)
 
-            if args.autosave > 0 and gamesAdded > 0 and gamesAdded % args.autosave == 0:
-              SaveJSON(dataset, args.outfile, True)
+              if args.autosave > 0 and gamesAdded > 0 and gamesAdded % args.autosave == 0:
+                SaveJSON(dataset, args.outfile, True)
+            else:
+              if appID not in notreleased:
+                notreleased.append(appID)
+                gamesNotReleased += 1
+
+                if args.autosave > 0 and gamesNotReleased > 0 and gamesNotReleased % args.autosave == 0:
+                  SaveJSON(notreleased, NOTRELEASED_FILE, True)
+
+              text = f"'{game['name']}' is not released yet"
           else:
-            if appID not in notreleased:
-              notreleased.append(appID)
-              gamesNotReleased += 1
+            discarted.append(appID)
+            gamesDiscarted += 1
 
-              if args.autosave > 0 and gamesNotReleased > 0 and gamesNotReleased % args.autosave == 0:
-                SaveJSON(notreleased, NOTRELEASED_FILE, True)
+          if args.autosave > 0 and gamesDiscarted > 0 and gamesDiscarted % args.autosave == 0:
+            SaveJSON(discarted, DISCARTED_FILE, True)
 
-            text = f"'{game['name']}' is not released yet"
-        else:
-          discarted.append(appID)
-          gamesDiscarted += 1
-
-        if args.autosave > 0 and gamesDiscarted > 0 and gamesDiscarted % args.autosave == 0:
-          SaveJSON(discarted, DISCARTED_FILE, True)
-
-        time.sleep(args.sleep if random.random() > 0.1 else args.sleep * 2.0)
-      count += 1
-      ProgressBar('Scraping', count, total)
+          time.sleep(args.sleep if random.random() > 0.1 else args.sleep * 2.0)
+        count += 1
+        ProgressBar('Scraping', count, total)
+    except KeyboardInterrupt:
+      pass
 
     ProgressBar('Scraping', total, total)
     print('\r')
-    Log(INFO, f'Scrape completed: {gamesAdded} new games added, {gamesNotReleased} not released, {gamesDiscarted} discarted')
     SaveJSON(dataset, args.outfile)
     SaveJSON(discarted, DISCARTED_FILE)
     SaveJSON(notreleased, NOTRELEASED_FILE)
-  else:
-    Log(ERROR, 'Error requesting list of games')
-    sys.exit()
 
-def UpdateFromCSV(dataset, notreleased, discarted, args):
+    return gamesAdded, gamesNotReleased, gamesDiscarted
+
+  return 0, 0, 0
+
+def UpdateFromCSV(dataset, notreleased, discarted, args, steam_api_key):
   '''
   Update using APPIDs from a CSV file. The first column must contain the APPID.
   '''
@@ -448,11 +490,13 @@ def UpdateFromCSV(dataset, notreleased, discarted, args):
     if len(appIDs) > 0:
       Log(INFO, f"New {len(appIDs)} appIDs loaded from '{args.update}'")
 
-      Scraper(dataset, notreleased, discarted, args, appIDs)
+      return Scraper(dataset, notreleased, discarted, args, steam_api_key, appIDs)
     else:
       Log(WARNING, f'No appID loaded from {args.update}')
   else:
     Log(ERROR, f'File {args.update} not found')
+
+  return 0, 0, 0
 
 if __name__ == "__main__":
   Log(INFO, f'Steam Games Scraper {__version__} by {__author__}')
@@ -467,12 +511,29 @@ if __name__ == "__main__":
   parser.add_argument('-l', '--language', type=str,   default=DEFAULT_LANGUAGE, help='Language code')
   parser.add_argument('-p', '--steamspy', type=str,   default=True,             help='Add SteamSpy info')
   parser.add_argument('-u', '--update',   type=str,   default='',               help='Update using APPIDs from a CSV file')
+  parser.add_argument('-oa', '--only-applist', action='store_true',             help='Only use the applist file, do not update it from Steam')
   args = parser.parse_args()
   random.seed(time.time())
 
   if 'h' in args or 'help' in args:
     parser.print_help()
     sys.exit()
+
+  # Get the Steam API key from the .env file
+  STEAM_API_KEY = None
+  if os.path.exists('.env'):
+    with open('.env', 'r') as f:
+      for line in f:
+        if line.startswith('STEAM_API_KEY='):
+          STEAM_API_KEY = line.split('=')[1].strip()
+          break
+  else:
+    Log(ERROR, 'STEAM_API_KEY not found in .env')
+    sys.exit(1)
+
+  if STEAM_API_KEY is None:
+    Log(ERROR, 'STEAM_API_KEY not found in .env\nPlease create a .env file with the API key\nYou can get it from https://steamcommunity.com/dev/apikey')
+    sys.exit(1)
 
   dataset = LoadJSON(args.infile)
   discarted = LoadJSON(DISCARTED_FILE)
@@ -493,16 +554,43 @@ if __name__ == "__main__":
     Log(INFO, f'{len(notreleased)} games not released yet')
 
   if len(discarted) > 0:
-    Log(INFO, f'{len(discarted)} apps discarted')
+    Log(INFO, f'{len(discarted)} apps discarded')
 
+  start_time = time.time()
   try:
+    added, not_released, discarted_count = (0, 0, 0)
     if args.update == '':
-      Scraper(dataset, notreleased, discarted, args)
+      added, not_released, discarted_count = Scraper(dataset, notreleased, discarted, args, STEAM_API_KEY)
     else:
-      UpdateFromCSV(dataset, notreleased, discarted, args)
+      added, not_released, discarted_count = UpdateFromCSV(dataset, notreleased, discarted, args, STEAM_API_KEY)
   except (KeyboardInterrupt, SystemExit):
-    SaveJSON(dataset, args.outfile, args.autosave > 0)
-    SaveJSON(discarted, DISCARTED_FILE, args.autosave > 0)
-    SaveJSON(notreleased, NOTRELEASED_FILE, args.autosave > 0)
+    added, not_released, discarted_count = (0, 0, 0) # Fallback if error occurs before Scraper starts
+
+  end_time = time.time()
+  duration = end_time - start_time
+  
+  if added > 0 or not_released > 0 or discarted_count > 0:
+    growth = (added / (len(dataset) - added) * 100) if (len(dataset) - added) > 0 else 100
+
+    print('\n' + '='*50)
+    print(f" SESSION STATISTICS")
+    print('='*50)
+    print(f" Time elapsed:    {time.strftime('%H:%M:%S', time.gmtime(duration))}")
+    if added > 0:
+      print(f" Avg time/game:   {duration/added:.2f}s")
+    print(f" New games:       {added} (+{growth:.2f}% growth)")
+    print(f" Not released:    {not_released}")
+    print(f" Discarded:       {discarted_count}")
+    print('-'*50)
+    print(f" TOTAL DATABASE STATS")
+    print('-'*50)
+    print(f" Total games:     {len(dataset)}")
+    print(f" Total discarded: {len(discarted)}")
+    print(f" Total pending:   {len(notreleased)}")
+    print('='*50 + '\n')
+
+  SaveJSON(dataset, args.outfile, args.autosave > 0)
+  SaveJSON(discarted, DISCARTED_FILE, args.autosave > 0)
+  SaveJSON(notreleased, NOTRELEASED_FILE, args.autosave > 0)
 
   Log(INFO, 'Done')

@@ -170,3 +170,11 @@ ToOneGameIdeaADay.py
 games.zip
 *.bak
 Cron.sh
+
+# SteamGamesScraper
+games.json
+applist.json
+games.csv
+games.zip
+*.bak
+uroboros.sh

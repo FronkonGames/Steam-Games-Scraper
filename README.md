@@ -14,6 +14,17 @@ I used this code to generate these dataset: '[Steam Games Dataset](https://www.k
 pip3 install requests argparse
 ```
 
+# Steam API Key 🔑
+
+The original public endpoint for retrieving the app list has been deprecated by Steam. The new official method via the `IStoreService` requires a valid Steam API Key.
+
+1. Get your API Key from the [Steam Community Dev page](https://steamcommunity.com/dev/apikey).
+2. Create a file named `.env` in the root directory of this project.
+3. Add your key to the file like this:
+   ```
+   STEAM_API_KEY=YOUR_KEY_HERE
+   ```
+
 # Usage 🚀
 
 Start generating data simply with:
@@ -22,9 +33,11 @@ Start generating data simply with:
 python SteamGamesScraper.py
 ```
 
-The first time, the file '_appplist.json_' will be created with all the ID that facilitates Steam (>140K). In the next execution, that file will be used instead of requesting all the data again. If you want to get new IDs, simply delete the file '_appplist.json_'.
+The first time, the file `applist.json` will be created with all the IDs provided by Steam (>140K). This requires the `STEAM_API_KEY` to be set in your `.env` file. In subsequent executions, the script will load the existing `applist.json` and update it with any new IDs found on Steam.
 
-Only the data of the games are saved. DLCs, music, tools, etc. are ignored and added to the file '_discarted.json_' so as not to ask for them in future searches. You can delete the file to ask again for those IDs.
+If you want to skip the update and only use the local `applist.json` file, use the `-oa` / `--only-applist` parameter.
+
+Only the data of the games are saved. DLCs, music, tools, etc. are ignored and added to the file `discarted.json` so as not to ask for them in future searches. You can delete the file to ask again for those IDs.
 
 Finally, in the file '_games.json'_ all games are stored, if:
 
@@ -176,6 +189,12 @@ Do you want to add new games from a file? You can use the parameter '_-u_' / '_-
 
 ```
 python SteamGamesScraper.py -u update.csv
+```
+
+To only use the local `applist.json` file and skip checking for new games from Steam, use the parameter `-oa` / `--only-applist`:
+
+```
+python SteamGamesScraper.py -oa
 ```
 
 
