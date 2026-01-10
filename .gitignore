@@ -178,3 +178,5 @@ games.csv
 games.zip
 *.bak
 uroboros.sh
+huggingface.py
+
