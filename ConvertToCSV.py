@@ -78,7 +78,7 @@ if os.path.exists(filename):
       'Peak CCU',
       'Required age',
       'Price',
-      'Discount'
+      'Discount',
       'DLC count',
       'About the game',
       'Supported languages',
