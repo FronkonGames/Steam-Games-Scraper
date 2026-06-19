@@ -71,7 +71,7 @@ if os.path.exists(filename):
 
   print(f'Dataset with {len(dataset)} games loaded.')
 
-  with open('games.csv', 'w', encoding="utf-8") as fin:
+  with open('games.csv', 'w', encoding="utf-8") as fout:
     header = [
       'AppID',
       'Name',
@@ -115,7 +115,7 @@ if os.path.exists(filename):
       'Movies'
     ]
 
-    fin.write(','.join(header) + '\n')
+    fout.write(','.join(header) + '\n')
 
     count = 0
     total = len(dataset)
@@ -164,7 +164,7 @@ if os.path.exists(filename):
       data += f"{WriteStringArray(app, 'movies')}"
       data += "\n"
 
-      fin.write(data)
+      fout.write(data)
       count += 1
       ProgressBar(count, total)
   

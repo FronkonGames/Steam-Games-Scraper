@@ -72,8 +72,8 @@ for app in dataset:
     categoryName = category                           # Category name (string).
 
   genres = game['genres']                             # Game genres.
-  for gender in genres:           
-    genderName = gender                               # Gender name (string).
+  for genre in genres:           
+    genreName = genre                               # Genre name (string).
 
   screenshots = game['screenshots']                   # Game screenshots.
   for screenshot in screenshots:            
@@ -83,6 +83,7 @@ for app in dataset:
   for movie in movies:            
     movieURL = movie                                  # Game movie URL (string).
 
-  tags = game['tags']                                 # Tags.
-  for tag in tags:           
-    tagKey = tag                                      # Tag key (string, int).
+  tags = game['tags']                                 # Tags (dict: tag name → vote count).
+  for tagName, voteCount in tags.items():           
+    tagKey = tagName                                 # Tag name (string).
+    tagValue = voteCount                             # Vote count (int).

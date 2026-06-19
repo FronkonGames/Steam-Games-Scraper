@@ -117,6 +117,8 @@ celerybeat-schedule
 celerybeat.pid
 
 AGENTS.md
+description.txt
+UploadDatabases.py
 
 # SageMath parsed files
 *.sage.py
@@ -181,4 +183,7 @@ games.zip
 *.bak
 uroboros.sh
 huggingface.py
+
+# uv
+.venv/
 

@@ -1,0 +1,10 @@
+[project]
+name = "steam-games-scraper"
+version = "1.4.0"
+description = "Extract information from all games published in Steam"
+requires-python = ">=3.10"
+dependencies = [
+    "huggingface-hub>=1.20.1",
+    "kaggle>=1.7.4.5",
+    "requests>=2.34.2",
+]

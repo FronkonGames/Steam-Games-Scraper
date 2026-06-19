@@ -145,7 +145,7 @@ def SteamRequest(appID, retryTime, successRequestCount, errorRequestCount, retri
   '''
   Request and parse information about a Steam app.
   '''
-  url = "http://store.steampowered.com/api/appdetails/"
+  url = "https://store.steampowered.com/api/appdetails/"
   response = DoRequest(url, {"appids": appID, "cc": currency, "l": language}, retryTime, successRequestCount, errorRequestCount, retries)
   if response:
     try:
@@ -305,7 +305,7 @@ def SaveJSON(data, filename, backup = False):
 
 def LoadJSON(filename):
   '''
-  Load a file with discarded apps.
+  Load a JSON file.
   '''
   data = None
   try:
@@ -489,7 +489,7 @@ def UpdateFromCSV(dataset, notreleased, discarded, args, steam_api_key):
         if len(row) > 0 and row[0].isnumeric():
           appID = row[0]
           if appID not in dataset and appID not in discarded and appID not in notreleased:
-            appIDs.append(row[0])
+            appIDs.append(appID)
 
     if len(appIDs) > 0:
       Log(INFO, f"New {len(appIDs)} appIDs loaded from '{args.update}'")
@@ -502,6 +502,16 @@ def UpdateFromCSV(dataset, notreleased, discarded, args, steam_api_key):
 
   return 0, 0, 0
 
+def str2bool(v):
+  if isinstance(v, bool):
+    return v
+  if v.lower() in ('yes', 'true', 't', '1'):
+    return True
+  elif v.lower() in ('no', 'false', 'f', '0'):
+    return False
+  else:
+    raise argparse.ArgumentTypeError('Boolean value expected.')
+
 if __name__ == "__main__":
   Log(INFO, f'Steam Games Scraper {__version__} by {__author__}')
   parser = argparse.ArgumentParser(description='Steam games scraper.')
@@ -510,10 +520,10 @@ if __name__ == "__main__":
   parser.add_argument('-s', '--sleep',    type=float, default=DEFAULT_SLEEP,    help='Waiting time between requests')
   parser.add_argument('-r', '--retries',  type=int,   default=DEFAULT_RETRIES,  help='Number of retries (0 to always retry)')
   parser.add_argument('-a', '--autosave', type=int,   default=DEFAULT_AUTOSAVE, help='Record the data every number of new entries (0 to deactivate)')
-  parser.add_argument('-d', '--released', action=argparse.BooleanOptionalAction, default=True, help='If it is on the list of not yet released, no information is requested')
+  parser.add_argument('-d', '--released', type=str2bool, default=True,             help='If it is on the list of not yet released, no information is requested')
   parser.add_argument('-c', '--currency', type=str,   default=DEFAULT_CURRENCY, help='Currency code')
   parser.add_argument('-l', '--language', type=str,   default=DEFAULT_LANGUAGE, help='Language code')
-  parser.add_argument('-p', '--steamspy', action=argparse.BooleanOptionalAction, default=True, help='Add SteamSpy info')
+  parser.add_argument('-p', '--steamspy', type=str2bool, default=True,             help='Add SteamSpy info')
   parser.add_argument('-u', '--update',   type=str,   default='',               help='Update using APPIDs from a CSV file')
   parser.add_argument('-oa', '--only-applist', action='store_true',             help='Only use the applist file, do not update it from Steam')
   args = parser.parse_args()

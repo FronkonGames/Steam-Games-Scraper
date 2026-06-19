@@ -7,8 +7,16 @@ I used this code to generate these dataset: '[Steam Games Dataset](https://www.k
 
 # Requisites 🔧
 
-- Python 3.8
-- requests and argparse.
+- Python 3.10+
+- [uv](https://docs.astral.sh/uv/) (recommended) or pip
+
+**Using uv:**
+
+```
+uv run SteamGamesScraper.py
+```
+
+**Using pip:**
 
 ```
 pip3 install requests argparse
@@ -28,6 +36,14 @@ The original public endpoint for retrieving the app list has been deprecated by 
 # Usage 🚀
 
 Start generating data simply with:
+
+**Using uv:**
+
+```
+uv run SteamGamesScraper.py
+```
+
+**Using pip:**
 
 ```
 python SteamGamesScraper.py
@@ -130,19 +146,19 @@ In the file '_ParseExample.py_' you can see a simple example of how to parse the
 To change the input file uses the parameter '_-i_' / '_-infile_':
 
 ```
-python SteamGamesScraper.py -i games.json
+uv run SteamGamesScraper.py -i games.json
 ```
 
 To change the output file uses the parameter '_-o_' / '_-outfile_':
 
 ```
-python SteamGamesScraper.py -o output.json
+uv run SteamGamesScraper.py -o output.json
 ```
 
 There is a general API rate limit for each unique IP adress of 200 requests in five minutes which is one request every 1.5 seconds. That's why 1.5 seconds are waited by default. You can change this with the parameter '_-s_' / '_-sleep_':
 
 ```
-python SteamGamesScraper.py -s 2.0
+uv run SteamGamesScraper.py -s 2.0
 ```
 
 > **It is not recommended to set the wait time below 1.5 seconds.**
@@ -150,7 +166,7 @@ python SteamGamesScraper.py -s 2.0
 You can disable the extra data collected in SteamSpy using '_-p_' / '_-steamspy'_:
 
 ```
-python SteamGamesScraper.py -p False
+uv run SteamGamesScraper.py --no-steamspy
 ```
 
 > **When this option is deactivated, some data will appear as empty.**
@@ -158,7 +174,7 @@ python SteamGamesScraper.py -p False
 When Steam denies a request, by default it is trying up to four times. You can change the number of retries with '_-r_' / '_-retries_':
 
 ```
-python SteamGamesScraper.py -r 10
+uv run SteamGamesScraper.py -r 10
 ```
 
 > **Although it is not recommended, you can set always retry by changing the value to 0.**
@@ -166,21 +182,21 @@ python SteamGamesScraper.py -r 10
 By default prices are requested in US dollars. You can change the currency with the parameter '_-c_' / '_--currency_' and the country or region code:
 
 ```
-python SteamGamesScraper.py -c es
+uv run SteamGamesScraper.py -c es
 ```
 
 By default the language is set to English. You can change the language wit the parameter '_-l_' / '_--language_' and the country or region code:
 
 ```
-python SteamGamesScraper.py -l en
+uv run SteamGamesScraper.py -l en
 ```
 
-The games that have not yet been released are added to the file '_notreleased.json_' and will not be checked again. If you want to ignore this list, you can set the parameter '_-d_' / '_-released_' to _False_, or eliminate the file.
+The games that have not yet been released are added to the file '_notreleased.json_' and will not be checked again. If you want to ignore this list, you can set the parameter '_-d_' / '_-released_' to _False_ with '--no-released', or eliminate the file.
 
 At the end of the scan, or by pressing _Ctrl + C_, all data are recorded. You can activate the _auto-save_ to activate each X new entries with '_-a_' / '_-autosave_':
 
 ```
-python SteamGamesScraper.py -a 100
+uv run SteamGamesScraper.py -a 100
 ```
 
 > A backup file will also be generated with the previous data.
@@ -188,13 +204,13 @@ python SteamGamesScraper.py -a 100
 Do you want to add new games from a file? You can use the parameter '_-u_' / '_-update_' and the CSV file name to add new games. The AppID must be in the first column.
 
 ```
-python SteamGamesScraper.py -u update.csv
+uv run SteamGamesScraper.py -u update.csv
 ```
 
 To only use the local `applist.json` file and skip checking for new games from Steam, use the parameter `-oa` / `--only-applist`:
 
 ```
-python SteamGamesScraper.py -oa
+uv run SteamGamesScraper.py -oa
 ```
 
 
