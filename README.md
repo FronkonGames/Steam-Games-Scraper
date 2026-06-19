@@ -7,7 +7,7 @@ I used this code to generate these dataset: '[Steam Games Dataset](https://www.k
 
 # Requisites 🔧
 
-- Pyhton 3.8
+- Python 3.8
 - requests and argparse.
 
 ```
