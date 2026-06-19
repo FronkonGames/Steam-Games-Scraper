@@ -16,7 +16,7 @@
 __author__ = "Martin Bustos <fronkongames@gmail.com>"
 __copyright__ = "Copyright 2022, Martin Bustos"
 __license__ = "MIT"
-__version__ = "1.1.0"
+__version__ = "1.2.0"
 __email__ = "fronkongames@gmail.com"
 
 import sys
@@ -41,6 +41,8 @@ def WriteString(app, key, default = ''):
   return f'"{value}"'
 
 def WriteStringArray(app, key):
+  if key not in app or app[key] is None:
+    return '""'
   values = []
   for value in app[key]:
     if value != None:

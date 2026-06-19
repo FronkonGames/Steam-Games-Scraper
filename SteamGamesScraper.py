@@ -16,7 +16,7 @@
 __author__    = "Martin Bustos <fronkongames@gmail.com>"
 __copyright__ = "Copyright 2022, Martin Bustos"
 __license__   = "MIT"
-__version__   = "1.3.0"
+__version__   = "1.4.0"
 __email__     = "fronkongames@gmail.com"
 
 import sys
@@ -107,7 +107,7 @@ def DoRequest(url, parameters=None, retryTime=5, successCount=0, errorCount=0, r
   except (requests.exceptions.HTTPError, requests.exceptions.ConnectionError,
           requests.exceptions.Timeout, requests.exceptions.RequestException,
           SSLError) as ex:
-    Log(EXCEPTION, f'An exception of type {type(ex).__name__} ocurred.')
+    Log(EXCEPTION, f'An exception of type {type(ex).__name__} occurred.')
     response = None
 
   if response and response.status_code == 200:
@@ -166,7 +166,7 @@ def SteamRequest(appID, retryTime, successRequestCount, errorRequestCount, retri
       else:
         return app_data, 'ok', name
     except Exception as ex:
-      Log(EXCEPTION, f'An exception of type {ex} ocurred. Traceback: {traceback.format_exc()}')
+      Log(EXCEPTION, f'An exception of type {ex} occurred. Traceback: {traceback.format_exc()}')
       return None, 'exception', 'Unknown'
   else:
     Log(ERROR, 'Bad response')
@@ -186,7 +186,7 @@ def SteamSpyRequest(appID, retryTime, successRequestCount, errorRequestCount, re
       else:
         return None
     except Exception as ex:
-      Log(EXCEPTION, f'An exception of type {ex} ocurred. Traceback: {traceback.format_exc()}')
+      Log(EXCEPTION, f'An exception of type {ex} occurred. Traceback: {traceback.format_exc()}')
       return None
   else:
     Log(ERROR, 'Bad response')
@@ -300,7 +300,7 @@ def SaveJSON(data, filename, backup = False):
       fout.write(json.dumps(data, indent=4, ensure_ascii=False))
       fout.truncate()
   except Exception as ex:
-    Log(EXCEPTION, f'An exception of type {ex} ocurred. Traceback: {traceback.format_exc()}')
+    Log(EXCEPTION, f'An exception of type {ex} occurred. Traceback: {traceback.format_exc()}')
     sys.exit()
 
 def LoadJSON(filename):
@@ -316,7 +316,7 @@ def LoadJSON(filename):
         if len(text) > 0:
           data = json.loads(text)
   except Exception as ex:
-    Log(EXCEPTION, f'An exception of type {ex} ocurred. Traceback: {traceback.format_exc()}')
+    Log(EXCEPTION, f'An exception of type {ex} occurred. Traceback: {traceback.format_exc()}')
     sys.exit()
 
   return data
@@ -510,18 +510,14 @@ if __name__ == "__main__":
   parser.add_argument('-s', '--sleep',    type=float, default=DEFAULT_SLEEP,    help='Waiting time between requests')
   parser.add_argument('-r', '--retries',  type=int,   default=DEFAULT_RETRIES,  help='Number of retries (0 to always retry)')
   parser.add_argument('-a', '--autosave', type=int,   default=DEFAULT_AUTOSAVE, help='Record the data every number of new entries (0 to deactivate)')
-  parser.add_argument('-d', '--released', type=bool,  default=True,             help='If it is on the list of not yet released, no information is requested')
+  parser.add_argument('-d', '--released', action=argparse.BooleanOptionalAction, default=True, help='If it is on the list of not yet released, no information is requested')
   parser.add_argument('-c', '--currency', type=str,   default=DEFAULT_CURRENCY, help='Currency code')
   parser.add_argument('-l', '--language', type=str,   default=DEFAULT_LANGUAGE, help='Language code')
-  parser.add_argument('-p', '--steamspy', type=str,   default=True,             help='Add SteamSpy info')
+  parser.add_argument('-p', '--steamspy', action=argparse.BooleanOptionalAction, default=True, help='Add SteamSpy info')
   parser.add_argument('-u', '--update',   type=str,   default='',               help='Update using APPIDs from a CSV file')
   parser.add_argument('-oa', '--only-applist', action='store_true',             help='Only use the applist file, do not update it from Steam')
   args = parser.parse_args()
   random.seed(time.time())
-
-  if 'h' in args or 'help' in args:
-    parser.print_help()
-    sys.exit()
 
   # Get the Steam API key from the .env file
   STEAM_API_KEY = None
@@ -529,7 +525,7 @@ if __name__ == "__main__":
     with open('.env', 'r') as f:
       for line in f:
         if line.startswith('STEAM_API_KEY='):
-          STEAM_API_KEY = line.split('=')[1].strip()
+          STEAM_API_KEY = line.split('=', 1)[1].strip()
           break
   else:
     Log(ERROR, 'STEAM_API_KEY not found in .env')

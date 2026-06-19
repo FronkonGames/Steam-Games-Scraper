@@ -75,9 +75,9 @@ for app in dataset:
   for gender in genres:           
     genderName = gender                               # Gender name (string).
 
-  screenshots = game['scrennshots']                   # Game screenshots.
+  screenshots = game['screenshots']                   # Game screenshots.
   for screenshot in screenshots:            
-    scrennshotsURL = screenshot                       # Game screenshot URL (string).
+    screenshotsURL = screenshot                       # Game screenshot URL (string).
 
   movies = game['movies']                             # Game movies.
   for movie in movies:            
