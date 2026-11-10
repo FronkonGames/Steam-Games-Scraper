@@ -512,21 +512,42 @@ def str2bool(v):
   else:
     raise argparse.ArgumentTypeError('Boolean value expected.')
 
-if __name__ == "__main__":
-  Log(INFO, f'Steam Games Scraper {__version__} by {__author__}')
+def non_negative_float(v):
+  try:
+    value = float(v)
+  except ValueError:
+    raise argparse.ArgumentTypeError(f'Invalid floating point value: {v!r}.')
+  if value < 0:
+    raise argparse.ArgumentTypeError(f'Value must be >= 0, got {v!r}.')
+  return value
+
+def non_negative_int(v):
+  try:
+    value = int(v)
+  except ValueError:
+    raise argparse.ArgumentTypeError(f'Invalid integer value: {v!r}.')
+  if value < 0:
+    raise argparse.ArgumentTypeError(f'Value must be >= 0, got {v!r}.')
+  return value
+
+def create_parser():
   parser = argparse.ArgumentParser(description='Steam games scraper.')
   parser.add_argument('-i', '--infile',   type=str,   default=DEFAULT_INFILE,  help='Input file name')
   parser.add_argument('-o', '--outfile',  type=str,   default=DEFAULT_OUTFILE,  help='Output file name')
-  parser.add_argument('-s', '--sleep',    type=float, default=DEFAULT_SLEEP,    help='Waiting time between requests')
-  parser.add_argument('-r', '--retries',  type=int,   default=DEFAULT_RETRIES,  help='Number of retries (0 to always retry)')
-  parser.add_argument('-a', '--autosave', type=int,   default=DEFAULT_AUTOSAVE, help='Record the data every number of new entries (0 to deactivate)')
+  parser.add_argument('-s', '--sleep',    type=non_negative_float, default=DEFAULT_SLEEP,    help='Waiting time between requests (must be >= 0)')
+  parser.add_argument('-r', '--retries',  type=non_negative_int, default=DEFAULT_RETRIES,  help='Number of retries (0 to always retry)')
+  parser.add_argument('-a', '--autosave', type=non_negative_int, default=DEFAULT_AUTOSAVE, help='Record the data every number of new entries (0 to deactivate)')
   parser.add_argument('-d', '--released', type=str2bool, default=True,             help='If it is on the list of not yet released, no information is requested')
   parser.add_argument('-c', '--currency', type=str,   default=DEFAULT_CURRENCY, help='Currency code')
   parser.add_argument('-l', '--language', type=str,   default=DEFAULT_LANGUAGE, help='Language code')
   parser.add_argument('-p', '--steamspy', type=str2bool, default=True,             help='Add SteamSpy info')
   parser.add_argument('-u', '--update',   type=str,   default='',               help='Update using APPIDs from a CSV file')
   parser.add_argument('-oa', '--only-applist', action='store_true',             help='Only use the applist file, do not update it from Steam')
-  args = parser.parse_args()
+  return parser
+
+if __name__ == "__main__":
+  Log(INFO, f'Steam Games Scraper {__version__} by {__author__}')
+  args = create_parser().parse_args()
   random.seed(time.time())
 
   # Get the Steam API key from the .env file
